@@ -3,6 +3,7 @@ from __future__ import annotations
 import time
 import uuid
 import logging
+from collections import Counter
 from dataclasses import dataclass
 from typing import Any, Protocol
 from urllib.parse import urlparse
@@ -18,6 +19,7 @@ from app.keyvault_certificate import (
 )
 
 logger = logging.getLogger(__name__)
+WORK_IQ_REFERENCE_MEDIA_TYPE = "application/vnd.workiq-reference"
 
 
 class WorkIQError(RuntimeError):
@@ -48,7 +50,23 @@ class OboApplication(Protocol):
 @dataclass(frozen=True)
 class WorkIQAttribution:
     title: str
-    url: str
+    url: str | None
+    attribution_type: str = "citation"
+
+
+@dataclass(frozen=True)
+class _AttributionCandidate:
+    value: dict[str, Any]
+    default_type: str = ""
+
+
+@dataclass(frozen=True)
+class _AttributionDiagnostics:
+    candidate_count: int
+    accepted_count: int
+    reference_part_count: int
+    invalid_url_count: int
+    type_counts: tuple[tuple[str, int], ...]
 
 
 @dataclass(frozen=True)
@@ -142,53 +160,138 @@ def _string_or_none(value: Any) -> str | None:
     return value if isinstance(value, str) and value else None
 
 
-def _extract_attributions(response: dict[str, Any]) -> tuple[WorkIQAttribution, ...]:
+def _reference_items(value: Any) -> list[dict[str, Any]]:
+    if isinstance(value, list):
+        return [item for item in value if isinstance(item, dict)]
+    if not isinstance(value, dict):
+        return []
+    items: list[dict[str, Any]] = []
+    for key in ("attributions", "citations", "references"):
+        nested = value.get(key)
+        if isinstance(nested, list):
+            items.extend(item for item in nested if isinstance(item, dict))
+    if items:
+        return items
+    return [value]
+
+
+def _attribution_candidates(
+    response: dict[str, Any],
+) -> tuple[list[_AttributionCandidate], int]:
     result = response.get("result")
     if not isinstance(result, dict):
-        return ()
+        return [], 0
 
+    candidates: list[_AttributionCandidate] = []
+    seen_candidates: set[int] = set()
+    reference_part_count = 0
+    for container in _walk_dicts(result):
+        for part in _part_list(container):
+            if not isinstance(part, dict):
+                continue
+            media_type = _string_or_none(part.get("mediaType")) or _string_or_none(
+                part.get("mimeType")
+            )
+            if media_type != WORK_IQ_REFERENCE_MEDIA_TYPE:
+                continue
+            reference_part_count += 1
+            for item in _reference_items(part.get("data")):
+                if id(item) not in seen_candidates:
+                    candidates.append(
+                        _AttributionCandidate(value=item, default_type="reference")
+                    )
+                    seen_candidates.add(id(item))
+        for key, default_type in (
+            ("attributions", "citation"),
+            ("citations", "citation"),
+            ("references", "reference"),
+        ):
+            raw_items = container.get(key)
+            if not isinstance(raw_items, list):
+                continue
+            for item in raw_items:
+                if isinstance(item, dict) and id(item) not in seen_candidates:
+                    candidates.append(
+                        _AttributionCandidate(value=item, default_type=default_type)
+                    )
+                    seen_candidates.add(id(item))
+    return candidates, reference_part_count
+
+
+def _walk_dicts(value: Any) -> list[dict[str, Any]]:
     containers: list[dict[str, Any]] = []
-    message = result.get("message")
-    if isinstance(message, dict):
-        containers.append(message)
+    if isinstance(value, dict):
+        containers.append(value)
+        for nested in value.values():
+            containers.extend(_walk_dicts(nested))
+    elif isinstance(value, list):
+        for nested in value:
+            containers.extend(_walk_dicts(nested))
+    return containers
 
-    task = result.get("task")
-    if isinstance(task, dict):
-        containers.append(task)
-        status = task.get("status")
-        if isinstance(status, dict):
-            status_message = status.get("message")
-            if isinstance(status_message, dict):
-                containers.append(status_message)
-        artifacts = task.get("artifacts")
-        if isinstance(artifacts, list):
-            containers.extend(item for item in artifacts if isinstance(item, dict))
 
+def _extract_attributions(
+    response: dict[str, Any],
+) -> tuple[tuple[WorkIQAttribution, ...], _AttributionDiagnostics]:
+    candidates, reference_part_count = _attribution_candidates(response)
     attributions: list[WorkIQAttribution] = []
-    seen: set[tuple[str, str]] = set()
-    for container in containers:
-        metadata = container.get("metadata")
-        if not isinstance(metadata, dict):
+    seen: set[tuple[str, str | None]] = set()
+    invalid_url_count = 0
+    type_counts: Counter[str] = Counter()
+    for candidate in candidates:
+        raw = candidate.value
+        attribution_type = (
+            _string_or_none(raw.get("attributionType")) or candidate.default_type or "unknown"
+        ).lower()
+        type_counts[
+            attribution_type
+            if attribution_type in {"citation", "annotation", "reference"}
+            else "unsupported"
+        ] += 1
+        if attribution_type not in {"citation", "annotation", "reference"}:
             continue
-        raw_attributions = metadata.get("attributions")
-        if not isinstance(raw_attributions, list):
+        title = (
+            _string_or_none(raw.get("providerDisplayName"))
+            or _string_or_none(raw.get("title"))
+            or _string_or_none(raw.get("name"))
+            or "Work IQ source"
+        )
+        raw_url = next(
+            (
+                value
+                for value in (
+                    raw.get("seeMoreWebUrl"),
+                    raw.get("webUrl"),
+                    raw.get("url"),
+                    raw.get("blobUrl"),
+                )
+                if value is not None
+            ),
+            None,
+        )
+        url = _validated_web_url(raw_url)
+        if raw_url not in (None, "") and url is None:
+            invalid_url_count += 1
             continue
-        for raw in raw_attributions:
-            if not isinstance(raw, dict):
-                continue
-            attribution_type = str(raw.get("attributionType", ""))
-            if attribution_type.lower() != "citation":
-                continue
-            title = _string_or_none(raw.get("providerDisplayName")) or "Work IQ citation"
-            url = _validated_web_url(raw.get("seeMoreWebUrl"))
-            if url is None:
-                continue
-            key = (title, url)
-            if key in seen:
-                continue
-            attributions.append(WorkIQAttribution(title=title, url=url))
-            seen.add(key)
-    return tuple(attributions)
+        key = (title, url)
+        if key in seen:
+            continue
+        attributions.append(
+            WorkIQAttribution(
+                title=title,
+                url=url,
+                attribution_type=attribution_type,
+            )
+        )
+        seen.add(key)
+    diagnostics = _AttributionDiagnostics(
+        candidate_count=len(candidates),
+        accepted_count=len(attributions),
+        reference_part_count=reference_part_count,
+        invalid_url_count=invalid_url_count,
+        type_counts=tuple(sorted(type_counts.items())),
+    )
+    return tuple(attributions), diagnostics
 
 
 def _validated_web_url(value: Any) -> str | None:
@@ -356,8 +459,20 @@ def ask_with_access_token(
         raise WorkIQProtocolError("Work IQ response id does not match the request")
 
     text, task_id, context_id = _extract_text(body)
-    attributions = _extract_attributions(body)
+    attributions, attribution_diagnostics = _extract_attributions(body)
     duration_ms = round((time.perf_counter() - started) * 1000)
+    type_summary = ",".join(
+        f"{name}={count}" for name, count in attribution_diagnostics.type_counts
+    ) or "none"
+    logger.info(
+        "Work IQ attribution diagnostics: candidates=%d accepted=%d types=%s "
+        "reference_parts=%d invalid_urls=%d",
+        attribution_diagnostics.candidate_count,
+        attribution_diagnostics.accepted_count,
+        type_summary,
+        attribution_diagnostics.reference_part_count,
+        attribution_diagnostics.invalid_url_count,
+    )
     logger.info(
         "Work IQ completed: task_id=%s attributions=%d duration_ms=%d",
         task_id or "unavailable",

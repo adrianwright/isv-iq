@@ -30,6 +30,12 @@ services:
     host: containerapp
     language: python
     resourceName: ${API_CONTAINER_APP_NAME}
+    hooks:
+      postdeploy:
+        shell: pwsh
+        run: ./ensure_fabric_status_config.ps1
+        dir: ./infra/hooks
+        continueOnError: false
     docker:
       path: services/api/Dockerfile
       context: .

@@ -31,7 +31,7 @@ describe('EvidencePacket links', () => {
     )
 
     expect(markup).not.toContain('<a ')
-    expect(markup).toContain('Not linked')
+    expect(markup).toContain('No direct link')
   })
 
   it('rejects unsafe and unsupported evidence URLs', () => {

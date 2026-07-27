@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import json
 import time
 from pathlib import Path
 
@@ -266,6 +267,42 @@ def test_activity_counts_equal_citation_counts() -> None:
         assert item.evidenceNoun == "citations"
 
 
+def test_run_source_counts_url_less_evidence_as_retrieved() -> None:
+    from app.schemas import Evidence
+    from app.sources import QueryContext, SourceResult
+
+    class SourceStub:
+        name = Source.WORK
+        label = "Work IQ"
+
+        def query(self, context: QueryContext) -> SourceResult:  # noqa: ARG002
+            return SourceResult(
+                source=Source.WORK,
+                label=self.label,
+                queries=["query"],
+                summary="Work IQ returned text without a linkable source.",
+                citations=[
+                    Evidence(
+                        refId="r4",
+                        source=Source.WORK,
+                        title="Work IQ workplace context",
+                        snippet="Coordinator context without a source link.",
+                        url=None,
+                        sourceType="workplace",
+                    )
+                ],
+                status="needs_review",
+                evidence_count=0,
+            )
+
+    orchestrator = Orchestrator(sources=[SourceStub()])
+    context = orchestrator._context_for(AskRequest(question=QUESTION))
+    result = orchestrator._run_source(SourceStub(), context)
+
+    assert result.status == "complete"
+    assert result.evidence_count == 1
+
+
 def test_agent_run_overrides_answer_and_trace() -> None:
     from app.agent_client import AgentRun, AgentToolCall
     from app.schemas import Source
@@ -386,7 +423,7 @@ def test_subject_named_in_question_overrides_current_case_context() -> None:
     assert result.patient.id == "PT-1061"
 
 
-def test_question_library_intents_return_distinct_evidence_packets() -> None:
+def test_question_library_intents_keep_stable_evidence_and_distinct_answer_refs() -> None:
     questions = [
         "Is Alex Morgan eligible for the EGFR exon 20 NSCLC trial (NCT99004324), and what needs review before screening?",
         "What is preventing PT-1042 from moving to formal trial screening for NCT99004324?",
@@ -397,17 +434,58 @@ def test_question_library_intents_return_distinct_evidence_packets() -> None:
         "For Alex Morgan and NCT99004324, what external trial registry or treatment landscape context is relevant to the EGFR exon 20 biomarker?",
     ]
     orchestrator = Orchestrator()
-    signatures = []
+    evidence_signatures = []
+    answer_signatures = []
     for question in questions:
         result = orchestrator.answer(AskRequest(question=question))
-        signatures.append(tuple(item.refId for item in result.evidence))
-        selected = {item.refId for item in result.evidence}
-        assert set(result.answerRefs) == selected
+        evidence_signatures.append(tuple(item.refId for item in result.evidence))
+        answer_signatures.append(tuple(result.answerRefs))
+        evidence_refs = {item.refId for item in result.evidence}
+        assert set(result.answerRefs) <= evidence_refs
+        source_refs: set[str] = set()
         for source in result.sourceMap:
-            assert set(source.citations) <= selected
+            assert set(source.citations) <= evidence_refs
             assert source.evidenceCount == len(source.citations)
+            source_refs.update(source.citations)
+        assert source_refs == evidence_refs
 
-    assert len(set(signatures)) == len(questions)
+    assert len(set(evidence_signatures)) == 1
+    assert len(set(answer_signatures)) == len(questions)
+
+
+def test_streamed_citation_counts_do_not_drop_on_final() -> None:
+    questions = [
+        "Is PT-1042 eligible for NCT99004324?",
+        "For PT-1042 and NCT99004324, what external registry context is relevant?",
+    ]
+    client = TestClient(app)
+
+    for question in questions:
+        with client.stream(
+            "POST",
+            "/api/ask/stream",
+            json={"question": question, "patientId": "PT-1042", "trialId": "NCT99004324"},
+        ) as response:
+            assert response.status_code == 200
+            lines = "".join(response.iter_text()).splitlines()
+
+        event_type = ""
+        streamed: dict[str, list[str]] = {}
+        final_source_map: dict[str, list[str]] = {}
+        for line in lines:
+            if line.startswith("event: "):
+                event_type = line.removeprefix("event: ")
+            elif line.startswith("data: "):
+                payload = json.loads(line.removeprefix("data: "))
+                if event_type == "source_result":
+                    streamed[payload["source"]] = payload["citations"]
+                elif event_type == "final":
+                    final_source_map = {
+                        item["source"]: item["citations"]
+                        for item in payload["result"]["sourceMap"]
+                    }
+
+        assert final_source_map == streamed
 
 
 def test_screening_packet_keeps_evidence_for_the_actual_blocking_category() -> None:

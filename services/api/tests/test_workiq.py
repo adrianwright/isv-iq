@@ -13,6 +13,8 @@ from app.workiq import (
     WorkIQProtocolError,
     WorkIQRequestError,
     WorkIQTokenExchangeError,
+    _extract_attributions,
+    ask_with_access_token,
 )
 
 
@@ -99,6 +101,11 @@ def test_work_iq_success_parses_a2a_task_and_sends_required_headers() -> None:
             title="Tumor board summary",
             url="https://contoso.sharepoint.com/tumor-board",
         ),
+        WorkIQAttribution(
+            title="Dana",
+            url="https://contoso.example/people/dana",
+            attribution_type="annotation",
+        ),
     )
 
 
@@ -126,6 +133,7 @@ def test_live_work_iq_maps_attributions_to_clickable_evidence(monkeypatch) -> No
                     WorkIQAttribution(
                         title="Tumor board chat",
                         url="https://teams.microsoft.com/l/message/thread",
+                        attribution_type="annotation",
                     ),
                 ),
             )
@@ -148,8 +156,153 @@ def test_live_work_iq_maps_attributions_to_clickable_evidence(monkeypatch) -> No
         "https://contoso.sharepoint.com/coordinator-handoff",
         "https://teams.microsoft.com/l/message/thread",
     ]
-    assert all(citation.sourceType == "work_iq_citation" for citation in result.citations)
+    assert [citation.sourceType for citation in result.citations] == [
+        "work_iq_citation",
+        "work_iq_annotation",
+    ]
     assert result.facts["work_iq_attribution_count"] == 2
+    assert result.status == "complete"
+    assert result.evidence_count == 2
+    assert result.evidence_noun == "sources"
+
+
+def test_live_work_iq_surfaces_response_evidence_without_attribution(monkeypatch) -> None:
+    from app.sources.base import QueryContext
+    from app.sources.work import LiveWorkIQ
+
+    class StubClient:
+        def ask(self, *, user_assertion: str, question: str) -> WorkIQAnswer:
+            assert user_assertion == "incoming-token"
+            assert "prefer citations over annotations" in question
+            return WorkIQAnswer(
+                text="Dana owns the repeat lab task.",
+                task_id="task-1",
+                context_id="context-1",
+                duration_ms=25,
+            )
+
+    source = LiveWorkIQ(_settings())
+    monkeypatch.setattr(source, "client", StubClient())
+    result = source.query(
+        QueryContext(
+            question="Who owns the next step?",
+            patient_id="PT-1042",
+            trial_id="NCT99004324",
+            registry={},
+            user_access_token="incoming-token",
+        )
+    )
+
+    assert result.status == "complete"
+    assert result.evidence_count == 1
+    assert result.evidence_noun == "sources"
+    assert len(result.citations) == 1
+    assert result.citations[0].title == "Work IQ response (no source attribution returned)"
+    assert result.citations[0].url is None
+    assert result.citations[0].sourceType == "work_iq_response"
+
+
+def test_work_iq_finds_nested_and_url_less_citations() -> None:
+    response = {
+        "result": {
+            "task": {
+                "artifacts": [
+                    {
+                        "parts": [
+                            {
+                                "text": "Answer",
+                                "metadata": {
+                                    "attributions": [
+                                        {
+                                            "attributionType": "Citation",
+                                            "providerDisplayName": "Coordinator task",
+                                        },
+                                        {
+                                            "attributionType": "Citation",
+                                            "providerDisplayName": "Tumor board summary",
+                                            "seeMoreWebUrl": "https://contoso.sharepoint.com/summary",
+                                        },
+                                    ]
+                                },
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+
+    attributions, diagnostics = _extract_attributions(response)
+
+    assert attributions == (
+        WorkIQAttribution(title="Coordinator task", url=None),
+        WorkIQAttribution(
+            title="Tumor board summary",
+            url="https://contoso.sharepoint.com/summary",
+        ),
+    )
+    assert diagnostics.candidate_count == 2
+    assert diagnostics.accepted_count == 2
+
+
+def test_work_iq_parses_reference_data_parts_and_logs_only_shape(caplog) -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        payload = json.loads(request.content)
+        return httpx.Response(
+            200,
+            request=request,
+            json={
+                "jsonrpc": "2.0",
+                "id": payload["id"],
+                "result": {
+                    "task": {
+                        "id": "task-reference",
+                        "contextId": "context-reference",
+                        "status": {"state": "TASK_STATE_COMPLETED"},
+                        "artifacts": [
+                            {
+                                "artifactId": "answer",
+                                "parts": [
+                                    {"text": "The coordinator owns the next step."},
+                                    {
+                                        "mediaType": "application/vnd.workiq-reference",
+                                        "data": {
+                                            "references": [
+                                                {
+                                                    "title": "Coordinator handoff",
+                                                    "webUrl": "https://contoso.sharepoint.com/private/handoff",
+                                                }
+                                            ]
+                                        },
+                                    },
+                                ],
+                            }
+                        ],
+                    }
+                },
+            },
+        )
+
+    with caplog.at_level("INFO", logger="app.workiq"):
+        answer = ask_with_access_token(
+            access_token="work-iq-token",
+            question="Find the owner",
+            endpoint="https://workiq.example/a2a/",
+            timeout_seconds=5,
+            timezone_offset_minutes=-300,
+            timezone="America/Chicago",
+            http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+        )
+
+    assert answer.attributions == (
+        WorkIQAttribution(
+            title="Coordinator handoff",
+            url="https://contoso.sharepoint.com/private/handoff",
+            attribution_type="reference",
+        ),
+    )
+    assert "candidates=1 accepted=1 types=reference=1 reference_parts=1 invalid_urls=0" in caplog.text
+    assert "contoso.sharepoint.com" not in caplog.text
 
 
 def test_live_work_iq_flag_selects_live_source_without_enabling_other_sources() -> None:

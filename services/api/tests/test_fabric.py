@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 
+import pytest
+
 from app.config import get_settings
 from app.sources.base import QueryContext
 from app.sources.fabric import LiveFabricIQ, MockFabricIQ, _normalize_date, _parse_crcl_readings
@@ -21,6 +23,36 @@ def test_parse_crcl_handles_iso_and_missing_dates() -> None:
     readings = _parse_crcl_readings("Latest value 48 mL/min on 2026-06-18; another reading of 60 mL/min.")
     assert readings[0] == (48.0, "2026-06-18")
     assert readings[1] == (60.0, None)
+
+
+def test_parse_crcl_handles_live_data_agent_wording_without_units() -> None:
+    answer = (
+        "The latest CrCl (CKD-EPI) value for patient PT-1042 is 48, measured on 6/18/2026. "
+        "The prior CrCl value was 55, measured on 5/20/2026."
+    )
+
+    assert _parse_crcl_readings(answer) == [
+        (48.0, "2026-06-18"),
+        (55.0, "2026-05-20"),
+    ]
+
+
+def test_live_fabric_does_not_mask_data_agent_failure(monkeypatch) -> None:
+    source = LiveFabricIQ(get_settings())
+
+    def fail_query(context):  # noqa: ANN001, ARG001
+        raise RuntimeError("Fabric unavailable")
+
+    monkeypatch.setattr(source, "_ask_data_agent", fail_query)
+    context = QueryContext(
+        question="q",
+        patient_id="PT-1042",
+        trial_id="NCT99004324",
+        registry={},
+    )
+
+    with pytest.raises(RuntimeError, match="Fabric unavailable"):
+        source.query(context)
 
 
 def test_normalize_date_variants() -> None:

@@ -136,6 +136,8 @@ class LiveWorkIQ:
             f"Retrieval focus: {focus} "
             "Use only relevant Microsoft 365 mail, calendar, To Do, Teams, and SharePoint evidence. "
             "Prefer the smallest set of sources that directly supports the question. "
+            "Cite each supporting Microsoft 365 item, prefer citations over annotations, and "
+            "include a source link when available. "
             "Do not infer clinical eligibility or invent missing facts."
         )
         answer = self.client.ask(
@@ -150,7 +152,7 @@ class LiveWorkIQ:
                 title=attribution.title,
                 snippet=snippet,
                 url=attribution.url,
-                sourceType="work_iq_citation",
+                sourceType=f"work_iq_{attribution.attribution_type}",
             )
             for index, attribution in enumerate(answer.attributions)
         ]
@@ -159,10 +161,10 @@ class LiveWorkIQ:
                 Evidence(
                     refId="r4",
                     source=Source.WORK,
-                    title="Work IQ workplace context",
+                    title="Work IQ response (no source attribution returned)",
                     snippet=snippet,
                     url=None,
-                    sourceType="workplace",
+                    sourceType="work_iq_response",
                 )
             ]
         return SourceResult(
@@ -177,6 +179,9 @@ class LiveWorkIQ:
                 "work_iq_attribution_count": len(answer.attributions),
             },
             duration_ms=answer.duration_ms,
+            status="complete",
+            evidence_count=len(citations),
+            evidence_noun="sources",
         )
 
 
