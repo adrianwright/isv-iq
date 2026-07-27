@@ -53,6 +53,7 @@ body::before {
 
 img {
   display: block;
+  height: auto;
   max-width: 100%;
 }
 
