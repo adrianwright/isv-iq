@@ -6,15 +6,15 @@ synthetic data only and no live service coordinates.
 | Filename | What to capture |
 |---|---|
 | `building-assessment-workflow.png` | Editable free-form question entry and optional question-bank examples, parallel IQ activity, and the Building Assessment timeline progressing through evidence matching and blocker detection |
-| `citations-and-assessment-steps.png` | Evidence packet with source links beside the specialist retrieval, deepening, reconciliation, and assessment trace |
 | `final-trial-readiness-assessment.png` | Completed assessment with trial summary, criteria cards, open issues, bottom line, drafted next action, review status, and patient facts |
+| `citations-and-assessment-steps.png` | Evidence packet with source links beside the specialist retrieval, deepening, reconciliation, and assessment trace |
 
 The README references:
 
 ```markdown
 docs/images/building-assessment-workflow.png
-docs/images/citations-and-assessment-steps.png
 docs/images/final-trial-readiness-assessment.png
+docs/images/citations-and-assessment-steps.png
 ```
 
 The GitHub Pages site also publishes `social-preview.png` as the 1280 x 640 Open Graph and social

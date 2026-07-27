@@ -22,15 +22,15 @@ data, drafted outputs, and no live task submission.
 *Select and edit a question-bank prompt or enter any free-form question, then watch the four IQ
 context providers retrieve evidence in parallel while the assessment is built.*
 
-![Citations and assessment steps](docs/images/citations-and-assessment-steps.png)
-
-*Inspect the evidence packet, source links, and the specialist retrieval and reconciliation steps
-behind the assessment.*
-
 ![Final trial readiness assessment](docs/images/final-trial-readiness-assessment.png)
 
 *Review the completed criteria, open issues, drafted next action, reviewer status, patient
 snapshot, and safety boundary.*
+
+![Citations and assessment steps](docs/images/citations-and-assessment-steps.png)
+
+*Inspect the evidence packet, source links, and the specialist retrieval and reconciliation steps
+behind the assessment.*
 
 ## Connected/live architecture
 
