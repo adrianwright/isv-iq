@@ -10,6 +10,15 @@ function isActive(status: SourceMapEntry['status']): boolean {
   return status === 'queued' || status === 'searching'
 }
 
+function evidenceCount(entry: SourceMapEntry): number {
+  return entry.evidenceCount ?? entry.citations.length
+}
+
+function scrollToEvidence(event: React.MouseEvent<HTMLAnchorElement>) {
+  event.preventDefault()
+  document.getElementById('evidence')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 export function IQActivityBar({ entries }: IQActivityBarProps) {
   return (
     <section className="iq-activity" id="sources" aria-label="IQ layer activity">
@@ -39,16 +48,25 @@ export function IQActivityBar({ entries }: IQActivityBarProps) {
             <div className="iq-chip-foot">
               {entry.status === 'failed' ? (
                 <span className="iq-count failed">Unavailable</span>
-              ) : (entry.evidenceCount ?? entry.citations.length) > 0 ? (
+              ) : entry.status === 'needs_review' ? (
+                evidenceCount(entry) > 0 ? (
+                  <a
+                    className="iq-count needs-review"
+                    href="#evidence"
+                    onClick={scrollToEvidence}
+                  >
+                    Review {evidenceCount(entry)} {entry.evidenceNoun ?? 'sources'}
+                  </a>
+                ) : (
+                  <span className="iq-count needs-review">Needs review</span>
+                )
+              ) : evidenceCount(entry) > 0 ? (
                 <a
                   className="iq-count"
                   href="#evidence"
-                  onClick={(event) => {
-                    event.preventDefault()
-                    document.getElementById('evidence')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                  }}
+                  onClick={scrollToEvidence}
                 >
-                  {(entry.evidenceCount ?? entry.citations.length) || 0} {entry.evidenceNoun ?? 'citations'}
+                  {evidenceCount(entry)} {entry.evidenceNoun ?? 'citations'}
                 </a>
               ) : (
                 <span className="iq-count muted">{statusLabel(entry.status)}</span>

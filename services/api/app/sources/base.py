@@ -33,7 +33,7 @@ class SourceResult:
     status: str = "complete"
     retrieving: str = ""
     evidence_count: int | None = None
-    evidence_noun: str = "sources"
+    evidence_noun: str | None = None
 
     def to_source_map_item(self) -> SourceMapItem:
         return SourceMapItem(
@@ -45,7 +45,7 @@ class SourceResult:
             durationMs=self.duration_ms,
             retrieving=self.retrieving,
             evidenceCount=self.evidence_count if self.evidence_count is not None else len(self.citations),
-            evidenceNoun=self.evidence_noun,
+            evidenceNoun=self.evidence_noun or "sources",
         )
 
 

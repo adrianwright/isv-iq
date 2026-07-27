@@ -266,6 +266,42 @@ def test_activity_counts_equal_citation_counts() -> None:
         assert item.evidenceNoun == "citations"
 
 
+def test_run_source_preserves_needs_review_status_and_zero_link_count() -> None:
+    from app.schemas import Evidence
+    from app.sources import QueryContext, SourceResult
+
+    class SourceStub:
+        name = Source.WORK
+        label = "Work IQ"
+
+        def query(self, context: QueryContext) -> SourceResult:  # noqa: ARG002
+            return SourceResult(
+                source=Source.WORK,
+                label=self.label,
+                queries=["query"],
+                summary="Work IQ returned text without a linkable source.",
+                citations=[
+                    Evidence(
+                        refId="r4",
+                        source=Source.WORK,
+                        title="Work IQ workplace context",
+                        snippet="Coordinator context without a source link.",
+                        url=None,
+                        sourceType="workplace",
+                    )
+                ],
+                status="needs_review",
+                evidence_count=0,
+            )
+
+    orchestrator = Orchestrator(sources=[SourceStub()])
+    context = orchestrator._context_for(AskRequest(question=QUESTION))
+    result = orchestrator._run_source(SourceStub(), context)
+
+    assert result.status == "needs_review"
+    assert result.evidence_count == 0
+
+
 def test_agent_run_overrides_answer_and_trace() -> None:
     from app.agent_client import AgentRun, AgentToolCall
     from app.schemas import Source

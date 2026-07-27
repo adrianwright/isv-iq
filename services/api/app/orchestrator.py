@@ -75,7 +75,6 @@ class Orchestrator:
         composes while the source map surfaces the outage."""
         try:
             result = source.query(context)
-            result.status = "complete"
         except Exception as exc:  # noqa: BLE001 - resilience: one failed layer must not break the rest
             try:
                 result = self._fallbacks[source.name].query(context)
@@ -93,8 +92,11 @@ class Orchestrator:
                     status="failed",
                 )
         result.retrieving = RETRIEVING.get(source.name, "")
-        result.evidence_noun = EVIDENCE_NOUN.get(source.name, "sources")
-        result.evidence_count = self._evidence_count(source.name, result)
+        result.evidence_noun = result.evidence_noun or EVIDENCE_NOUN.get(
+            source.name, "sources"
+        )
+        if result.evidence_count is None:
+            result.evidence_count = self._evidence_count(source.name, result)
         return result
 
     @staticmethod
@@ -406,7 +408,11 @@ class Orchestrator:
             item.citations = [
                 citation.refId for citation in result.citations if citation.refId in evidence_ids
             ]
-            item.evidenceCount = len(item.citations)
+            item.evidenceCount = (
+                min(result.evidence_count, len(item.citations))
+                if result.evidence_count is not None
+                else len(item.citations)
+            )
             source_map.append(item)
 
         patient_biomarkers = [str(item) for item in registry_patient.get("biomarkers", [])]

@@ -540,6 +540,11 @@ body.dark {
   background: var(--red-soft);
 }
 
+.iq-chip.status-needs_review {
+  border-left-color: var(--amber);
+  background: var(--amber-soft);
+}
+
 .iq-chip-head {
   display: flex;
   justify-content: space-between;
@@ -571,6 +576,9 @@ body.dark {
 .iq-chip.status-complete .iq-state {
   color: var(--green);
 }
+.iq-chip.status-needs_review .iq-state {
+  color: var(--amber);
+}
 .iq-chip.status-failed .iq-state {
   color: var(--red);
 }
@@ -594,6 +602,9 @@ body.dark {
 }
 .iq-count.failed {
   color: var(--red);
+}
+.iq-count.needs-review {
+  color: var(--amber);
 }
 .iq-latency {
   color: var(--muted);
