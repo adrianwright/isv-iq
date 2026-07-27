@@ -303,6 +303,30 @@ def test_run_source_counts_url_less_evidence_as_retrieved() -> None:
     assert result.evidence_count == 1
 
 
+def test_source_without_citations_needs_review() -> None:
+    from app.sources import QueryContext, SourceResult
+
+    class UngroundedWeb:
+        name = Source.WEB
+        label = "Web IQ"
+
+        def query(self, context: QueryContext) -> SourceResult:  # noqa: ARG002
+            return SourceResult(
+                source=self.name,
+                label=self.label,
+                queries=["external context"],
+                summary="Retrieval completed without source references.",
+                citations=[],
+            )
+
+    orchestrator = Orchestrator()
+    context = orchestrator._context_for(AskRequest(question=QUESTION))
+    result = orchestrator._run_source(UngroundedWeb(), context)
+
+    assert result.status == "needs_review"
+    assert result.evidence_count == 0
+
+
 def test_agent_run_overrides_answer_and_trace() -> None:
     from app.agent_client import AgentRun, AgentToolCall
     from app.schemas import Source

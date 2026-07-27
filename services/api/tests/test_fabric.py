@@ -55,6 +55,24 @@ def test_live_fabric_does_not_mask_data_agent_failure(monkeypatch) -> None:
         source.query(context)
 
 
+def test_live_fabric_rejects_unusable_data_agent_answer(monkeypatch) -> None:
+    source = LiveFabricIQ(get_settings())
+    monkeypatch.setattr(
+        source,
+        "_ask_data_agent",
+        lambda context: "No matching rows were found.",
+    )
+    context = QueryContext(
+        question="q",
+        patient_id="PT-1042",
+        trial_id="NCT99004324",
+        registry={},
+    )
+
+    with pytest.raises(RuntimeError, match="no usable CrCl readings"):
+        source.query(context)
+
+
 def test_normalize_date_variants() -> None:
     assert _normalize_date("6/18/2026") == "2026-06-18"
     assert _normalize_date("2026-06-18") == "2026-06-18"
