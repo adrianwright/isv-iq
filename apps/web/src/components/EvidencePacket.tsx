@@ -94,7 +94,7 @@ export function EvidencePacket({ evidence, criteria, intent = 'eligibility' }: E
                       Open source
                     </a>
                   ) : (
-                    <span className="muted">Not linked</span>
+                    <span className="muted">No direct link</span>
                   )}
                 </td>
               </tr>

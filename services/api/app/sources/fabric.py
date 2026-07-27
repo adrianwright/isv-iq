@@ -134,23 +134,13 @@ class LiveFabricIQ:
     def query(self, context: QueryContext) -> SourceResult:
         base = self._scaffold.query(context)
         facts: dict[str, Any] = dict(base.facts)
-
-        try:
-            answer = self._ask_data_agent(context)
-        except Exception as exc:  # keep the proof-of-concept resilient; fall back to seed values
-            facts["fabric_live"] = False
-            facts["fabric_live_error"] = str(exc)
-            return SourceResult(
-                source=self.name,
-                label=self.label,
-                queries=[f"latest CrCl for {context.patient_id} (Fabric Data Agent, unavailable)"],
-                summary=f"Fabric IQ Data Agent unavailable; using seeded structured values. ({exc})",
-                citations=base.citations,
-                facts=facts,
-                duration_ms=0,
-            )
+        answer = self._ask_data_agent(context)
 
         parsed = _parse_crcl_readings(answer)
+        if not parsed:
+            raise RuntimeError(
+                f"Fabric Data Agent returned no usable CrCl readings for {context.patient_id}"
+            )
         base_latest = base.facts.get("latest_crcl") or {}
         base_prior = base.facts.get("prior_crcl") or {}
         unit = base_latest.get("unit", "mL/min")
@@ -221,11 +211,35 @@ def _parse_crcl_readings(text: str) -> list[tuple[float, str | None]]:
     """Extract (value, iso_date | None) CrCl readings from the Data Agent's natural-language answer,
     in the order they appear (latest first, then prior)."""
     readings: list[tuple[float, str | None]] = []
-    for match in re.finditer(r"(\d+(?:\.\d+)?)\s*mL\s*/?\s*min", text, re.IGNORECASE):
+    value_positions: set[int] = set()
+    contextual_pattern = re.compile(
+        r"(?:latest|prior|previous)\s+CrCl"
+        r"(?:\s*\([^)]*\))?"
+        r"(?:\s+value)?"
+        r"(?:\s+for\s+patient\s+PT-\d+)?"
+        r"(?:\s+(?:is|was|of|=|:))?"
+        r"\s+(\d+(?:\.\d+)?)",
+        re.IGNORECASE,
+    )
+    matches = list(contextual_pattern.finditer(text))
+    matches.extend(
+        match
+        for match in re.finditer(r"(\d+(?:\.\d+)?)\s*mL\s*/?\s*min", text, re.IGNORECASE)
+        if match.start(1) not in {item.start(1) for item in matches}
+    )
+    matches.sort(key=lambda item: item.start(1))
+    for match in matches:
+        if match.start(1) in value_positions:
+            continue
+        value_positions.add(match.start(1))
         value = float(match.group(1))
         tail = text[match.end() : match.end() + 40]
         # Bound the tail before the next reading so we do not steal its date.
-        next_reading = re.search(r"\d+(?:\.\d+)?\s*mL", tail)
+        next_reading = re.search(
+            r"(?:latest|prior|previous)\s+CrCl|\d+(?:\.\d+)?\s*mL",
+            tail,
+            re.IGNORECASE,
+        )
         if next_reading:
             tail = tail[: next_reading.start()]
         date_match = _DATE_PATTERNS.search(tail)

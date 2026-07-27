@@ -131,13 +131,8 @@ class LiveWebIQ:
         references = data.get("references", [])
         first_url = next((r.get("url") or r.get("blobUrl") for r in references if r.get("url") or r.get("blobUrl")), None)
         clean = re.sub(r"\[ref_id:\d+\]", "", answer).strip()
-
-        return SourceResult(
-            source=self.name,
-            label=self.label,
-            queries=[question],
-            summary="Web IQ (live Bing grounding): external treatment-landscape context for the patient's biomarker.",
-            citations=[
+        citations = (
+            [
                 Evidence(
                     refId="r7",
                     source=Source.WEB,
@@ -146,7 +141,17 @@ class LiveWebIQ:
                     url=first_url,
                     sourceType="web",
                 )
-            ],
+            ]
+            if references
+            else []
+        )
+
+        return SourceResult(
+            source=self.name,
+            label=self.label,
+            queries=[question],
+            summary="Web IQ (live Bing grounding): external treatment-landscape context for the patient's biomarker.",
+            citations=citations,
             facts={"external_context": clean[:1200], "registry_status": None, "reference_count": len(references)},
             duration_ms=0,
         )

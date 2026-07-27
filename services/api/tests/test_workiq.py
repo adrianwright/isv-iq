@@ -13,6 +13,7 @@ from app.workiq import (
     WorkIQProtocolError,
     WorkIQRequestError,
     WorkIQTokenExchangeError,
+    _extract_attributions,
     ask_with_access_token,
 )
 
@@ -165,7 +166,7 @@ def test_live_work_iq_maps_attributions_to_clickable_evidence(monkeypatch) -> No
     assert result.evidence_noun == "sources"
 
 
-def test_live_work_iq_marks_missing_links_for_review(monkeypatch) -> None:
+def test_live_work_iq_surfaces_response_evidence_without_attribution(monkeypatch) -> None:
     from app.sources.base import QueryContext
     from app.sources.work import LiveWorkIQ
 
@@ -192,11 +193,56 @@ def test_live_work_iq_marks_missing_links_for_review(monkeypatch) -> None:
         )
     )
 
-    assert result.status == "needs_review"
-    assert result.evidence_count == 0
+    assert result.status == "complete"
+    assert result.evidence_count == 1
     assert result.evidence_noun == "sources"
     assert len(result.citations) == 1
+    assert result.citations[0].title == "Work IQ response (no source attribution returned)"
     assert result.citations[0].url is None
+    assert result.citations[0].sourceType == "work_iq_response"
+
+
+def test_work_iq_finds_nested_and_url_less_citations() -> None:
+    response = {
+        "result": {
+            "task": {
+                "artifacts": [
+                    {
+                        "parts": [
+                            {
+                                "text": "Answer",
+                                "metadata": {
+                                    "attributions": [
+                                        {
+                                            "attributionType": "Citation",
+                                            "providerDisplayName": "Coordinator task",
+                                        },
+                                        {
+                                            "attributionType": "Citation",
+                                            "providerDisplayName": "Tumor board summary",
+                                            "seeMoreWebUrl": "https://contoso.sharepoint.com/summary",
+                                        },
+                                    ]
+                                },
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+
+    attributions, diagnostics = _extract_attributions(response)
+
+    assert attributions == (
+        WorkIQAttribution(title="Coordinator task", url=None),
+        WorkIQAttribution(
+            title="Tumor board summary",
+            url="https://contoso.sharepoint.com/summary",
+        ),
+    )
+    assert diagnostics.candidate_count == 2
+    assert diagnostics.accepted_count == 2
 
 
 def test_work_iq_parses_reference_data_parts_and_logs_only_shape(caplog) -> None:

@@ -161,16 +161,12 @@ class LiveWorkIQ:
                 Evidence(
                     refId="r4",
                     source=Source.WORK,
-                    title="Work IQ workplace context",
+                    title="Work IQ response (no source attribution returned)",
                     snippet=snippet,
                     url=None,
-                    sourceType="workplace",
+                    sourceType="work_iq_response",
                 )
             ]
-        has_citation = any(
-            attribution.attribution_type in {"citation", "reference"}
-            for attribution in answer.attributions
-        )
         return SourceResult(
             source=self.name,
             label=self.label,
@@ -183,8 +179,8 @@ class LiveWorkIQ:
                 "work_iq_attribution_count": len(answer.attributions),
             },
             duration_ms=answer.duration_ms,
-            status="complete" if has_citation else "needs_review",
-            evidence_count=len(answer.attributions),
+            status="complete",
+            evidence_count=len(citations),
             evidence_noun="sources",
         )
 

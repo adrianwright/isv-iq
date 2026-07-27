@@ -75,6 +75,7 @@ class Orchestrator:
         composes while the source map surfaces the outage."""
         try:
             result = source.query(context)
+            result.status = "complete" if result.citations else "needs_review"
         except Exception as exc:  # noqa: BLE001 - resilience: one failed layer must not break the rest
             try:
                 result = self._fallbacks[source.name].query(context)
@@ -92,11 +93,8 @@ class Orchestrator:
                     status="failed",
                 )
         result.retrieving = RETRIEVING.get(source.name, "")
-        result.evidence_noun = result.evidence_noun or EVIDENCE_NOUN.get(
-            source.name, "sources"
-        )
-        if result.evidence_count is None:
-            result.evidence_count = self._evidence_count(source.name, result)
+        result.evidence_noun = EVIDENCE_NOUN.get(source.name, "sources")
+        result.evidence_count = self._evidence_count(source.name, result)
         return result
 
     @staticmethod
@@ -395,12 +393,13 @@ class Orchestrator:
             citation for result in results for citation in result.citations
         )
         selected_refs = self._evidence_refs_for_intent(intent, criterion_results)
-        evidence = [
-            item
+        answer_ref_ids = {
+            item.refId
             for item in all_evidence
             if item.refId in selected_refs
             or ("r4" in selected_refs and item.refId.startswith("r4-"))
-        ]
+        }
+        evidence = all_evidence
         evidence_ids = {item.refId for item in evidence}
         source_map = []
         for result in results:
@@ -408,11 +407,7 @@ class Orchestrator:
             item.citations = [
                 citation.refId for citation in result.citations if citation.refId in evidence_ids
             ]
-            item.evidenceCount = (
-                min(result.evidence_count, len(item.citations))
-                if result.evidence_count is not None
-                else len(item.citations)
-            )
+            item.evidenceCount = len(item.citations)
             source_map.append(item)
 
         patient_biomarkers = [str(item) for item in registry_patient.get("biomarkers", [])]
@@ -480,7 +475,7 @@ class Orchestrator:
             keyIssue=self._key_issue(registry_trial),
             latestProtocol=str(trial_row.get("latest_protocol") or registry_trial.get("latest_protocol") or ""),
         )
-        answer_refs = [item.refId for item in evidence]
+        answer_refs = [item.refId for item in evidence if item.refId in answer_ref_ids]
         composed_answer = self._compose_answer(
             intent=intent,
             patient=patient,

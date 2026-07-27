@@ -24,8 +24,8 @@ export function BuildingAssessment({ sources, draft }: BuildingAssessmentProps) 
     if (draftRef.current) draftRef.current.scrollTop = draftRef.current.scrollHeight
   }, [draft])
 
-  const retrievalStarted = sources.some((s) => s.status === 'searching' || s.status === 'complete' || s.status === 'failed')
-  const retrievalDone = sources.length > 0 && sources.every((s) => s.status === 'complete' || s.status === 'failed')
+  const retrievalStarted = sources.some((s) => s.status === 'searching' || s.status === 'complete' || s.status === 'needs_review' || s.status === 'failed')
+  const retrievalDone = sources.length > 0 && sources.every((s) => s.status === 'complete' || s.status === 'needs_review' || s.status === 'failed')
   const drafting = draft.trim().length > 0
 
   const phase: 'retrieving' | 'synthesizing' | 'composing' = drafting

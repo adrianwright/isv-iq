@@ -50,7 +50,7 @@ class OboApplication(Protocol):
 @dataclass(frozen=True)
 class WorkIQAttribution:
     title: str
-    url: str
+    url: str | None
     attribution_type: str = "citation"
 
 
@@ -182,36 +182,10 @@ def _attribution_candidates(
     if not isinstance(result, dict):
         return [], 0
 
-    containers: list[dict[str, Any]] = []
-    message = result.get("message")
-    if isinstance(message, dict):
-        containers.append(message)
-
-    task = result.get("task")
-    if isinstance(task, dict):
-        containers.append(task)
-        status = task.get("status")
-        if isinstance(status, dict):
-            status_message = status.get("message")
-            if isinstance(status_message, dict):
-                containers.append(status_message)
-        artifacts = task.get("artifacts")
-        if isinstance(artifacts, list):
-            containers.extend(item for item in artifacts if isinstance(item, dict))
-
     candidates: list[_AttributionCandidate] = []
+    seen_candidates: set[int] = set()
     reference_part_count = 0
-    for container in containers:
-        metadata = container.get("metadata")
-        if isinstance(metadata, dict):
-            for key in ("attributions", "citations"):
-                raw_items = metadata.get(key)
-                if isinstance(raw_items, list):
-                    candidates.extend(
-                        _AttributionCandidate(value=item)
-                        for item in raw_items
-                        if isinstance(item, dict)
-                    )
+    for container in _walk_dicts(result):
         for part in _part_list(container):
             if not isinstance(part, dict):
                 continue
@@ -221,11 +195,39 @@ def _attribution_candidates(
             if media_type != WORK_IQ_REFERENCE_MEDIA_TYPE:
                 continue
             reference_part_count += 1
-            candidates.extend(
-                _AttributionCandidate(value=item, default_type="reference")
-                for item in _reference_items(part.get("data"))
-            )
+            for item in _reference_items(part.get("data")):
+                if id(item) not in seen_candidates:
+                    candidates.append(
+                        _AttributionCandidate(value=item, default_type="reference")
+                    )
+                    seen_candidates.add(id(item))
+        for key, default_type in (
+            ("attributions", "citation"),
+            ("citations", "citation"),
+            ("references", "reference"),
+        ):
+            raw_items = container.get(key)
+            if not isinstance(raw_items, list):
+                continue
+            for item in raw_items:
+                if isinstance(item, dict) and id(item) not in seen_candidates:
+                    candidates.append(
+                        _AttributionCandidate(value=item, default_type=default_type)
+                    )
+                    seen_candidates.add(id(item))
     return candidates, reference_part_count
+
+
+def _walk_dicts(value: Any) -> list[dict[str, Any]]:
+    containers: list[dict[str, Any]] = []
+    if isinstance(value, dict):
+        containers.append(value)
+        for nested in value.values():
+            containers.extend(_walk_dicts(nested))
+    elif isinstance(value, list):
+        for nested in value:
+            containers.extend(_walk_dicts(nested))
+    return containers
 
 
 def _extract_attributions(
@@ -233,7 +235,7 @@ def _extract_attributions(
 ) -> tuple[tuple[WorkIQAttribution, ...], _AttributionDiagnostics]:
     candidates, reference_part_count = _attribution_candidates(response)
     attributions: list[WorkIQAttribution] = []
-    seen: set[tuple[str, str]] = set()
+    seen: set[tuple[str, str | None]] = set()
     invalid_url_count = 0
     type_counts: Counter[str] = Counter()
     for candidate in candidates:
@@ -261,13 +263,14 @@ def _extract_attributions(
                     raw.get("seeMoreWebUrl"),
                     raw.get("webUrl"),
                     raw.get("url"),
+                    raw.get("blobUrl"),
                 )
                 if value is not None
             ),
             None,
         )
         url = _validated_web_url(raw_url)
-        if url is None:
+        if raw_url not in (None, "") and url is None:
             invalid_url_count += 1
             continue
         key = (title, url)
