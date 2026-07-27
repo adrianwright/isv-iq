@@ -15,6 +15,33 @@ citations, open questions, and a drafted next step for human review. The reposit
 about runtime defaults: `scripts/dev.ps1` runs a safe deterministic mock path backed by synthetic
 data, drafted outputs, and no live task submission.
 
+## Concept walkthrough
+
+These conceptual diagrams show why a single research question needs multiple knowledge domains,
+how agentic retrieval decomposes it, and how evidence is reconciled into a human-reviewed result.
+Select any image to open the full-resolution version.
+
+[![A typical oncology trial question spanning multiple grounding sources](docs/images/amc-iq-01.png)](docs/images/amc-iq-01.png)
+
+*A cross-domain trial-readiness question. The illustration uses the abbreviated conceptual trial
+label `NCT-4324`; the runnable synthetic demo uses `NCT99004324`.*
+
+[![The clinical research knowledge ecosystem surrounding an oncology question](docs/images/amc-iq-00.png)](docs/images/amc-iq-00.png)
+
+*A conceptual knowledge ecosystem. People and teams are context participants; EHR, genomics and
+pathology, trial protocols, and guidelines and policy are retrievable knowledge sources.*
+
+[![Question clauses mapped to their supporting evidence domains](docs/images/amc-iq-02.png)](docs/images/amc-iq-02.png)
+
+*A conceptual map from question clauses to evidence domains. The illustration uses the abbreviated
+trial label `NCT-4324`; the runnable synthetic demo uses `NCT99004324`.*
+
+[![Agentic retrieval engine decomposing, retrieving, and merging evidence](docs/images/amc-iq-03.png)](docs/images/amc-iq-03.png)
+
+*The agentic retrieval pattern: plan and review, select knowledge sources, merge evidence, and keep
+the resulting assessment and next action subject to human review. Actual integrations depend on
+the IQ providers enabled for a deployment.*
+
 ## Screenshots
 
 ![Question entry, IQ activity, and building assessment](docs/images/building-assessment-workflow.png)
