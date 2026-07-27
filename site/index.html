@@ -43,6 +43,7 @@
           <span>AMC IQ</span>
         </a>
         <nav class="site-nav" aria-label="AMC IQ proof-of-concept navigation">
+          <a href="#concept">Concept</a>
           <a href="#intelligence">IQ layers</a>
           <a href="#experience">Experience</a>
           <a href="#boundaries">Boundaries</a>
@@ -141,6 +142,92 @@
           language, patient facts, institutional policy, current workflow, and public evidence
           while surfacing uncertainty instead of hiding it.
         </p>
+      </section>
+
+      <section class="section container concept-section" id="concept">
+        <p class="section-label">Concept walkthrough</p>
+        <h2 class="editorial-heading">
+          One question becomes a governed, multi-source retrieval problem.
+        </h2>
+        <p class="concept-intro">
+          These diagrams show the idea behind AMC IQ: identify the evidence domains implicit in the
+          question, retrieve across them deliberately, reconcile the results, and keep the final
+          assessment subject to human review. Select a diagram to open it at full resolution.
+        </p>
+        <div class="concept-grid">
+          <figure class="concept-card">
+            <a href="images/amc-iq-01.png" aria-label="Open the oncology trial question diagram">
+              <img
+                src="images/amc-iq-01.png"
+                width="2774"
+                height="1417"
+                alt="A typical oncology trial-readiness question that requires multiple grounding sources."
+                loading="lazy"
+              >
+            </a>
+            <figcaption>
+              <strong>01 / The question</strong>
+              <span>
+                Concept framing for a cross-domain trial-readiness question. The abbreviated
+                illustration label NCT-4324 maps to synthetic trial NCT99004324 in the runnable demo.
+              </span>
+            </figcaption>
+          </figure>
+          <figure class="concept-card">
+            <a href="images/amc-iq-00.png" aria-label="Open the knowledge ecosystem diagram">
+              <img
+                src="images/amc-iq-00.png"
+                width="2828"
+                height="1570"
+                alt="The clinical research knowledge ecosystem surrounding an oncology question."
+                loading="lazy"
+              >
+            </a>
+            <figcaption>
+              <strong>02 / The ecosystem</strong>
+              <span>
+                People and teams are context participants; EHR, genomics and pathology, protocols,
+                and guidelines and policy are retrievable knowledge sources.
+              </span>
+            </figcaption>
+          </figure>
+          <figure class="concept-card">
+            <a href="images/amc-iq-02.png" aria-label="Open the evidence-domain mapping diagram">
+              <img
+                src="images/amc-iq-02.png"
+                width="2786"
+                height="1465"
+                alt="Question clauses mapped to the clinical and research evidence domains needed to answer them."
+                loading="lazy"
+              >
+            </a>
+            <figcaption>
+              <strong>03 / The evidence map</strong>
+              <span>
+                Each clause points to a different supporting domain. The abbreviated illustration
+                label NCT-4324 maps to synthetic trial NCT99004324 in the runnable demo.
+              </span>
+            </figcaption>
+          </figure>
+          <figure class="concept-card">
+            <a href="images/amc-iq-03.png" aria-label="Open the agentic retrieval engine diagram">
+              <img
+                src="images/amc-iq-03.png"
+                width="2779"
+                height="1539"
+                alt="An agentic retrieval engine planning queries, selecting sources, and merging evidence."
+                loading="lazy"
+              >
+            </a>
+            <figcaption>
+              <strong>04 / The retrieval pattern</strong>
+              <span>
+                Iterative planning, knowledge-source selection, evidence merging, and a governed
+                human-review task. Enabled integrations vary by deployment.
+              </span>
+            </figcaption>
+          </figure>
+        </div>
       </section>
 
       <section class="section container" id="intelligence">

@@ -382,6 +382,64 @@ a {
   max-width: 860px;
 }
 
+.concept-intro {
+  max-width: 790px;
+  margin: 28px 0 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+}
+
+.concept-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 54px;
+}
+
+.concept-card {
+  overflow: hidden;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--panel);
+  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.24);
+}
+
+.concept-card a {
+  display: block;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+  background: #0b0d18;
+}
+
+.concept-card img {
+  width: 100%;
+  transition: transform 180ms ease, filter 180ms ease;
+}
+
+.concept-card a:hover img {
+  filter: brightness(1.05);
+  transform: scale(1.012);
+}
+
+.concept-card figcaption {
+  display: grid;
+  gap: 8px;
+  padding: 22px 24px 24px;
+}
+
+.concept-card figcaption strong {
+  color: var(--purple-bright);
+  font-size: 0.76rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.concept-card figcaption span {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
 .layer-list {
   margin-top: 62px;
   border-top: 1px solid var(--line);
@@ -713,6 +771,10 @@ a:focus-visible {
   }
 
   .boundary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .concept-grid {
     grid-template-columns: 1fr;
   }
 
