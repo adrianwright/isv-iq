@@ -203,11 +203,10 @@ relationships:
 # ---- Fabric mapping (LIVE) ----
 # This contract is now provisioned as a REAL Fabric IQ Ontology item (`amciq_oncology_ontology`,
 # type "Ontology") in the AMC IQ workspace, created via the Fabric REST API by
-# `agent/provisioning/live/provision_fabric_ontology.py`. Each entity type below is a Fabric ontology
-# entity type bound (NonTimeSeries) to its Delta table in the `amciq_fabric_oncology_clinical`
-# Lakehouse, and each relationship is a Fabric relationship type. The published Fabric Data Agent
-# consumes the ontology (NL2Ontology). This YAML remains the portable, human-readable source of
-# truth for Fabric Ontology provisioning.
+# `agent/provisioning/live/provision_fabric_ontology.py`. The script emits generation 2 TMDL with
+# Direct Lake backing tables, ontology entities, model relationships, and entity relationships.
+# The Data Agent attachment remains gated because Microsoft currently lists an outage affecting
+# new-experience Ontology sources. This YAML remains the portable, human-readable source of truth.
 fabric_mapping:
   ontology_item: "amciq_oncology_ontology (type Ontology); provisioned via provision_fabric_ontology.py"
   lakehouse: "One delta table per entity (table name above); load via data/fabric/generate.py output."

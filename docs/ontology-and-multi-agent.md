@@ -61,9 +61,12 @@ application because the published external MCP endpoint is not reliable.
 
 The ontology is the portable semantic contract for the domain: typed entities and typed
 relationships between them. It is defined once in `data/ontology/ontology.yaml` and maps onto the
-Lakehouse tables, the live Fabric IQ Ontology item, and the standalone `amciq_oncology_graph`
-GraphModel used for GQL traversal. The ontology's system-owned child graph remains empty because of
-a Fabric preview defect, so it is not attached to the Data Agent.
+Lakehouse tables, the live generation 2 Fabric IQ Ontology item, and the standalone
+`amciq_oncology_graph` GraphModel used for GQL traversal. The Ontology provisioner emits TMDL for
+the Direct Lake tables, entities, model relationships, and entity relationships, then reads the
+definition back to prevent an empty-model false success. Ontology-to-Data-Agent attachment remains
+gated while Microsoft's documented new-experience Ontology source outage is active:
+<https://learn.microsoft.com/fabric/data-science/data-agent-ontology-sources>.
 
 The standalone graph uses canonical longitudinal identities for `Lab`
 (`patient_id + lab_date + lab_type`) and `Treatment` (`patient_id + line + drug_name`) so repeated

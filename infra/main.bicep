@@ -57,6 +57,12 @@ param foundryKbName string
 @description('Web knowledge base name used by live web search.')
 param webKbName string
 
+@description('Native Microsoft Web IQ REST endpoint.')
+param webIqEndpoint string = 'https://api.microsoft.ai/v3/search/web'
+
+@description('Existing Key Vault secret containing the native Web IQ evaluation API key.')
+param webIqApiKeySecretName string
+
 @description('Optional Azure AI Search endpoint override. When empty, derived from existingSearchServiceName.')
 param searchEndpoint string = ''
 
@@ -126,6 +132,10 @@ param tags object = {
 var effectiveSearchEndpoint = empty(searchEndpoint) ? 'https://${existingSearchServiceName}.search.windows.net' : searchEndpoint
 var effectiveProjectEndpoint = empty(projectEndpoint) ? 'https://${existingFoundryAccountName}.services.ai.azure.com/api/projects/${foundryProjectName}' : projectEndpoint
 
+resource deployedKeyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
+  name: keyVaultName
+}
+
 module identity 'modules/identity.bicep' = {
   name: 'amciq-identity'
   params: {
@@ -176,6 +186,8 @@ module apps 'modules/apps.bicep' = {
     searchEndpoint: effectiveSearchEndpoint
     foundryKbName: foundryKbName
     webKbName: webKbName
+    webIqEndpoint: webIqEndpoint
+    webIqApiKey: deployedKeyVault.getSecret(webIqApiKeySecretName)
     projectEndpoint: effectiveProjectEndpoint
     fabricWorkspaceId: fabricWorkspaceId
     fabricDataAgentId: fabricDataAgentId
@@ -193,6 +205,7 @@ module apps 'modules/apps.bicep' = {
     apiAudience: apiAudience
     apiRequiredScope: apiRequiredScope
     workIqClientId: workIqClientId
+    workIqClientCertificatePfx: deployedKeyVault.getSecret(workIqClientCertificateSecretName)
     workIqClientCertificateSecretName: workIqClientCertificateSecretName
     workIqEndpoint: workIqEndpoint
     workIqScope: workIqScope

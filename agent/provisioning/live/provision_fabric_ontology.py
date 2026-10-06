@@ -1,10 +1,10 @@
 """Provision the REAL Fabric IQ Ontology for the AMC IQ proof-of-concept (no GUI, pure REST).
 
 The Fabric IQ Ontology is a first-class Fabric item (type "Ontology") in the Fabric IQ (preview)
-workload. This script defines the precision-oncology domain ontology (typed entity types,
-relationship types, and Lakehouse data bindings) and pushes it to the ontology item via the
-updateDefinition REST API, so the ontology is live and portal-visible and can be consumed by a
-Fabric Data Agent (NL2Ontology).
+workload. This script defines the precision-oncology domain ontology as generation 2 TMDL: Direct
+Lake backing tables, typed ontology entities, model relationships, and entity relationships. It
+pushes the definition through updateDefinition so the ontology is portal-visible and can be
+consumed by a Fabric Data Agent (NL2Ontology).
 
 It maps the portable contract in data/ontology/ontology.yaml onto real Fabric constructs and binds
 each entity type to the corresponding Delta table in the amciq_fabric_oncology_clinical Lakehouse.
@@ -44,22 +44,21 @@ STORAGE_TOKEN = required_environment("STORAGE_TOKEN")
 ONT = os.environ.get("ONTOLOGY_ID", "")
 ONLY_ENTITY = os.environ.get("ONLY_ENTITY")
 
-# Delta type -> Fabric Ontology property valueType. Allowed ontology valueTypes are:
-# String, Boolean, DateTime, Object, BigInt, Double (there is no "Integer"). Ontology does not
-# support Decimal, so double/float/decimal all map to Double.
-TYPE_MAP = {
-    "string": "String",
-    "integer": "BigInt",
-    "long": "BigInt",
-    "short": "BigInt",
-    "byte": "BigInt",
-    "double": "Double",
-    "float": "Double",
-    "decimal": "Double",
-    "boolean": "Boolean",
-    "date": "DateTime",
-    "timestamp": "DateTime",
+TMDL_TYPE_MAP = {
+    "string": "string",
+    "integer": "int64",
+    "long": "int64",
+    "short": "int64",
+    "byte": "int64",
+    "double": "double",
+    "float": "double",
+    "decimal": "double",
+    "boolean": "boolean",
+    "date": "dateTime",
+    "timestamp": "dateTime",
 }
+
+RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 
 from dataclasses import dataclass
 
@@ -84,9 +83,9 @@ class RelSpec:
     tgt_map: dict[str, str]          # rel-table column -> target entity key column
 
 
-# Entity type -> spec. Keys are proper (composite where natural) so the graph has unique instances;
-# `display` gives each node a human-readable label; `description`/`synonyms`/`props` populate the
-# ontology semanticEnrichment metadata so AI agents and NL2Ontology get rich business context.
+# Entity type -> spec. `description` and `props` become TMDL documentation comments surfaced to
+# ontology consumers. Generation 2 currently accepts one keyProperty, so composite contracts use
+# their final, most-specific key component.
 ENTITIES: dict[str, EntitySpec] = {
     "Patient": EntitySpec(
         "patient_registry", ("patient_id",), "display_name",
@@ -270,25 +269,54 @@ RELATIONSHIPS: list[RelSpec] = [
 ]
 
 
-def _pos_int64(*parts: str) -> str:
-    """Deterministic positive 63-bit integer id (as string) from the given name parts."""
-    h = hashlib.sha256("::".join(parts).encode()).digest()
-    return str(int.from_bytes(h[:8], "big") & 0x7FFFFFFFFFFFFFFF)
-
-
 def _det_guid(*parts: str) -> str:
     return str(uuid.UUID(hashlib.sha256("::".join(parts).encode()).hexdigest()[:32]))
 
 
-def _b64(obj: object) -> str:
-    return base64.b64encode(json.dumps(obj).encode()).decode()
+def _b64(value: object) -> str:
+    raw = value if isinstance(value, str) else json.dumps(value, separators=(",", ":"))
+    return base64.b64encode(raw.encode()).decode()
+
+
+def _part(path: str, value: object) -> dict[str, str]:
+    return {"path": path, "payload": _b64(value), "payloadType": "InlineBase64"}
+
+
+def _description(value: str) -> str:
+    return "\n".join(f"/// {line.strip()}" for line in value.splitlines() if line.strip())
+
+
+def _request(method: str, url: str, **kwargs) -> requests.Response:
+    for attempt in range(5):
+        try:
+            response = requests.request(method, url, timeout=60, **kwargs)
+            if response.status_code not in RETRYABLE_STATUS_CODES:
+                return response
+        except requests.RequestException:
+            if attempt == 4:
+                raise
+        time.sleep(min(2**attempt, 16))
+    return response
+
+
+def _lakehouse_sql_endpoint() -> tuple[str, str]:
+    h = {"Authorization": "Bearer " + FABRIC_TOKEN}
+    url = f"{FABRIC}/workspaces/{WS}/lakehouses/{LH}"
+    response = _request("GET", url, headers=h)
+    response.raise_for_status()
+    properties = response.json().get("properties", {}).get("sqlEndpointProperties", {})
+    host = properties.get("connectionString")
+    database = properties.get("id")
+    if not host or not database or properties.get("provisioningStatus") != "Success":
+        raise RuntimeError(f"Lakehouse SQL endpoint is unavailable: {properties}")
+    return host, database
 
 
 def delta_schema(table: str) -> list[tuple[str, str]]:
     """Return [(column, delta_type)] from the latest Delta log commit for a table."""
     base = f"{ONELAKE}/{WS}/{LH}/Tables/{table}/_delta_log"
     h = {"Authorization": f"Bearer {STORAGE_TOKEN}"}
-    listing = requests.get(f"{base}?recursive=false&resource=filesystem", headers=h)
+    listing = _request("GET", f"{base}?recursive=false&resource=filesystem", headers=h)
     listing.raise_for_status()
     commits = sorted(
         p["name"].split("/")[-1]
@@ -297,7 +325,7 @@ def delta_schema(table: str) -> list[tuple[str, str]]:
     )
     schema: list[tuple[str, str]] = []
     for commit in commits:  # later commits override earlier metaData
-        raw = requests.get(f"{base}/{commit}", headers=h)
+        raw = _request("GET", f"{base}/{commit}", headers=h)
         raw.raise_for_status()
         for line in raw.content.decode("utf-8").split("\n"):
             if '"metaData"' not in line:
@@ -308,129 +336,242 @@ def delta_schema(table: str) -> list[tuple[str, str]]:
     return schema
 
 
-def _prop_id(entity: str, col: str) -> str:
-    return _pos_int64(entity, col)
+def _table_tmdl(table: str, columns: list[tuple[str, str]]) -> str:
+    lines = [f"table {table}", f"\tlineageTag: {_det_guid('table', table)}", ""]
+    for column, delta_type in columns:
+        lines.extend(
+            [
+                f"\tcolumn {column}",
+                f"\t\tdataType: {TMDL_TYPE_MAP.get(delta_type.lower(), 'string')}",
+                f"\t\tlineageTag: {_det_guid('column', table, column)}",
+                f"\t\tsourceColumn: {column}",
+                "",
+            ]
+        )
+    lines.extend(
+        [
+            f"\tpartition {table} = entity",
+            "\t\tmode: directLake",
+            "\t\tsource",
+            f"\t\t\tentityName: {table}",
+            "\t\t\tschemaName: dbo",
+            "\t\t\texpressionSource: DatabaseQuery",
+            "",
+        ]
+    )
+    return "\n".join(lines)
 
 
-def build_entity_part(entity: str, spec: EntitySpec) -> tuple[str, dict, dict]:
-    """Return (entity_type_id, entity_definition, data_binding) for one entity type."""
-    cols = delta_schema(spec.table)
-    col_names = {c for c, _ in cols}
-    props = []
-    prop_bindings = []
-    for col, dtype in cols:
-        pid = _prop_id(entity, col)
-        vtype = TYPE_MAP.get(dtype.lower(), "String")
-        prop = {"id": pid, "name": col, "redefines": None, "baseTypeNamespaceType": None, "valueType": vtype}
-        desc = spec.props.get(col)
-        if desc:  # property-level semanticEnrichment carries the Description column in the portal
-            prop["semanticEnrichment"] = {"description": desc, "customAttributes": {}}
-        props.append(prop)
-        prop_bindings.append({"sourceColumnName": col, "targetPropertyId": pid})
-    key_ids = [_prop_id(entity, k) for k in spec.keys if k in col_names] or [props[0]["id"]]
-    display_id = _prop_id(entity, spec.display) if spec.display in col_names else key_ids[0]
-    et_id = _pos_int64("entity", entity)
-    entity_def = {
-        "id": et_id,
-        "namespace": "usertypes",
-        "baseEntityTypeId": None,
-        "name": entity,
-        "entityIdParts": key_ids,
-        "displayNamePropertyId": display_id,
-        "namespaceType": "Custom",
-        "visibility": "Visible",
-        "properties": props,
-        "timeseriesProperties": [],
-        # Entity-level semanticEnrichment = the portal Metadata panel (Description + Synonyms), giving
-        # AI agents and NL2Ontology rich business context.
-        "semanticEnrichment": {
-            "description": spec.description,
-            "synonyms": list(spec.synonyms),
-            "customAttributes": {},
-        },
-    }
-    binding = {
-        "id": _det_guid("binding", entity),
-        "dataBindingConfiguration": {
-            "dataBindingType": "NonTimeSeries",
-            "propertyBindings": prop_bindings,
-            "sourceTableProperties": {
-                "sourceType": "LakehouseTable",
-                "workspaceId": WS,
-                "itemId": LH,
-                "sourceTableName": spec.table,
-                "sourceSchema": "dbo",
-            },
-        },
-    }
-    return et_id, entity_def, binding
+def _entity_tmdl(entity: str, spec: EntitySpec, columns: list[tuple[str, str]]) -> str:
+    column_names = {column for column, _ in columns}
+    keys = [key for key in spec.keys if key in column_names]
+    if not keys:
+        raise ValueError(f"{entity} has no available key property in {spec.table}.")
+    # Generation 2 currently exposes one keyProperty. For composite contracts, the final component is
+    # the most specific identifier (criterion_id, marker, amendment_id, or trial_id).
+    key = keys[-1]
+    lines = [
+        _description(spec.description),
+        f"entity {entity}",
+        f"\tlineageTag: {_det_guid('entity', entity)}",
+        f"\tbackingTable: {spec.table}",
+        f"\tkeyProperty: {key}",
+        "",
+    ]
+    for column, delta_type in columns:
+        description = spec.props.get(column)
+        if description:
+            lines.append("\t" + _description(description).replace("\n", "\n\t"))
+        lines.extend(
+            [
+                f"\tproperty {column}",
+                f"\t\tdataType: {TMDL_TYPE_MAP.get(delta_type.lower(), 'string')}",
+                f"\t\tlineageTag: {_det_guid('property', entity, column)}",
+                "",
+                "\t\tbackingConfiguration",
+                f"\t\t\tvalueColumn: {spec.table}.{column}",
+                "",
+            ]
+        )
+    return "\n".join(lines)
+
+
+def _relationship_parts(
+    selected_entities: dict[str, EntitySpec],
+) -> tuple[str, str, list[str], list[str]]:
+    model_relationships: list[str] = []
+    entity_relationships: list[str] = []
+    relationship_names: list[str] = []
+    entity_relationship_names: list[str] = []
+
+    def add(
+        name: str,
+        source_entity: str,
+        target_entity: str,
+        source_column: str,
+        target_column: str,
+        *,
+        one_to_many: bool = False,
+    ) -> None:
+        relationship_name = f"rel_{name}"
+        source_table = selected_entities[source_entity].table
+        target_table = selected_entities[target_entity].table
+        model_relationships.extend(
+            [
+                f"relationship {relationship_name}",
+                f"\tfromColumn: {source_table}.{source_column}",
+                f"\ttoColumn: {target_table}.{target_column}",
+            ]
+        )
+        if one_to_many:
+            model_relationships.extend(["\tfromCardinality: one", "\ttoCardinality: many"])
+        model_relationships.append("")
+        entity_relationships.extend(
+            [
+                f"entityRelationship {name}",
+                f"\tlineageTag: {_det_guid('entity-relationship', name)}",
+                f"\tfromEntity: {source_entity}",
+                f"\ttoEntity: {target_entity}",
+                "",
+                "\tbackingConfiguration",
+                f"\t\trelationship: {relationship_name}",
+                "",
+            ]
+        )
+        relationship_names.append(relationship_name)
+        entity_relationship_names.append(name)
+
+    for relationship in RELATIONSHIPS:
+        if relationship.src not in selected_entities or relationship.tgt not in selected_entities:
+            continue
+        source_spec = selected_entities[relationship.src]
+        target_spec = selected_entities[relationship.tgt]
+        if relationship.table == source_spec.table:
+            source_column, target_key = list(relationship.tgt_map.items())[-1]
+            add(
+                relationship.name,
+                relationship.src,
+                relationship.tgt,
+                source_column,
+                target_key,
+            )
+        elif relationship.table == target_spec.table:
+            target_column, source_key = list(relationship.src_map.items())[-1]
+            add(
+                relationship.name,
+                relationship.src,
+                relationship.tgt,
+                source_key,
+                target_column,
+                one_to_many=True,
+            )
+        elif relationship.table == ENTITIES["Enrollment"].table:
+            # Generation 2 model relationships are table-to-table. Represent the many-to-many
+            # Patient/Trial screening edge through the existing Enrollment entity.
+            add(
+                "has_enrollment",
+                "Patient",
+                "Enrollment",
+                "patient_id",
+                "patient_id",
+                one_to_many=True,
+            )
+            add(
+                "enrollment_for_trial",
+                "Enrollment",
+                "Trial",
+                "trial_id",
+                "trial_id",
+            )
+
+    return (
+        "\n".join(model_relationships),
+        "\n".join(entity_relationships),
+        relationship_names,
+        entity_relationship_names,
+    )
 
 
 def build_definition() -> dict:
-    parts = [
-        {"path": "definition.json", "payload": _b64({}), "payloadType": "InlineBase64"},
-        {
-            "path": ".platform",
-            "payload": _b64(
-                {
-                    "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
-                    "metadata": {"type": "Ontology", "displayName": ONTOLOGY_NAME, "description": "AMC IQ precision-oncology domain ontology for clinical-trial readiness: patients, trials, criteria, biomarkers, labs, treatments, and care-team workflow."},
-                    "config": {"version": "2.0", "logicalId": "00000000-0000-0000-0000-000000000000"},
-                }
-            ),
-            "payloadType": "InlineBase64",
-        },
-    ]
-    entity_ids: dict[str, str] = {}
+    description = (
+        "AMC IQ precision-oncology domain ontology for clinical-trial readiness: patients, trials, "
+        "criteria, biomarkers, labs, treatments, and care-team workflow."
+    )
     items = list(ENTITIES.items())
     if ONLY_ENTITY:
         items = [(ONLY_ENTITY, ENTITIES[ONLY_ENTITY])]
-    for entity, spec in items:
-        et_id, entity_def, binding = build_entity_part(entity, spec)
-        entity_ids[entity] = et_id
-        parts.append({"path": f"EntityTypes/{et_id}/definition.json", "payload": _b64(entity_def), "payloadType": "InlineBase64"})
-        parts.append({"path": f"EntityTypes/{et_id}/DataBindings/{binding['id']}.json", "payload": _b64(binding), "payloadType": "InlineBase64"})
-
+    selected_entities = dict(items)
+    schemas = {entity: delta_schema(spec.table) for entity, spec in items}
+    sql_host, sql_database = _lakehouse_sql_endpoint()
+    relationship_tmdl = ""
+    entity_relationship_tmdl = ""
+    relationship_names: list[str] = []
+    entity_relationship_names: list[str] = []
     if not ONLY_ENTITY:
-        for rel in RELATIONSHIPS:
-            rid = _pos_int64("rel", rel.name)
-            rel_def = {
-                "namespace": "usertypes",
-                "id": rid,
-                "name": rel.name,
-                "namespaceType": "Custom",
-                "source": {"entityTypeId": entity_ids[rel.src]},
-                "target": {"entityTypeId": entity_ids[rel.tgt]},
-            }
-            parts.append({"path": f"RelationshipTypes/{rid}/definition.json", "payload": _b64(rel_def), "payloadType": "InlineBase64"})
-            # Contextualization: bind the relationship to the table carrying both endpoints' keys so
-            # the graph materializes real edges. Map rel-table columns to each side's key property ids.
-            ctx_id = _det_guid("ctx", rel.name)
-            ctx = {
-                "id": ctx_id,
-                "dataBindingTable": {
-                    "workspaceId": WS,
-                    "itemId": LH,
-                    "sourceTableName": rel.table,
-                    "sourceSchema": "dbo",
-                    "sourceType": "LakehouseTable",
-                },
-                "sourceKeyRefBindings": [
-                    {"sourceColumnName": col, "targetPropertyId": _prop_id(rel.src, key)} for col, key in rel.src_map.items()
-                ],
-                "targetKeyRefBindings": [
-                    {"sourceColumnName": col, "targetPropertyId": _prop_id(rel.tgt, key)} for col, key in rel.tgt_map.items()
-                ],
-            }
-            parts.append({"path": f"RelationshipTypes/{rid}/Contextualizations/{ctx_id}.json", "payload": _b64(ctx), "payloadType": "InlineBase64"})
+        (
+            relationship_tmdl,
+            entity_relationship_tmdl,
+            relationship_names,
+            entity_relationship_names,
+        ) = _relationship_parts(selected_entities)
 
+    platform = {
+        "$schema": (
+            "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/"
+            "platformProperties/2.0.0/schema.json"
+        ),
+        "metadata": {
+            "type": "Ontology",
+            "displayName": ONTOLOGY_NAME,
+            "description": description,
+        },
+        "config": {
+            "version": "2.0",
+            "logicalId": "00000000-0000-0000-0000-000000000000",
+        },
+    }
+    parts = [
+        _part(".platform", platform),
+        _part("database.tmdl", f"{_description(description)}\ndatabase\n\tcompatibilityLevel: 1000000\n"),
+        _part(
+            "expressions.tmdl",
+            (
+                "expression DatabaseQuery =\n"
+                "\t\tlet\n"
+                f'\t\t    database = Sql.Database("{sql_host}", "{sql_database}")\n'
+                "\t\tin\n"
+                "\t\t    database\n"
+                f"\tlineageTag: {_det_guid('expression', 'DatabaseQuery')}\n"
+            ),
+        ),
+        _part(
+            "namespaces/default.tmdl",
+            "namespace default\n\tlineageTag: default\n",
+        ),
+    ]
+    for entity, spec in items:
+        parts.append(_part(f"tables/{spec.table}.tmdl", _table_tmdl(spec.table, schemas[entity])))
+        parts.append(_part(f"entities/{entity}.tmdl", _entity_tmdl(entity, spec, schemas[entity])))
+
+    if relationship_tmdl:
+        parts.append(_part("relationships.tmdl", relationship_tmdl))
+    if entity_relationship_tmdl:
+        parts.append(_part("entityRelationships.tmdl", entity_relationship_tmdl))
+
+    model_lines = ["model Model", ""]
+    model_lines.extend(f"ref table {spec.table}" for _, spec in items)
+    model_lines.extend(f"ref entity {entity}" for entity, _ in items)
+    model_lines.extend(f"ref relationship {name}" for name in relationship_names)
+    model_lines.extend(f"ref entityRelationship {name}" for name in entity_relationship_names)
+    model_lines.extend(["ref expression DatabaseQuery", "ref namespace default", ""])
+    parts.append(_part("model.tmdl", "\n".join(model_lines)))
     return {"definition": {"parts": parts}}
 
 
 def update_definition(definition: dict) -> None:
     url = f"{FABRIC}/workspaces/{WS}/ontologies/{ONT}/updateDefinition?updateMetadata=true"
     h = {"Authorization": f"Bearer {FABRIC_TOKEN}", "Content-Type": "application/json"}
-    r = requests.post(url, headers=h, json=definition)
+    r = _request("POST", url, headers=h, json=definition)
     print(f"updateDefinition HTTP {r.status_code}")
     if r.status_code == 202:
         op = r.headers.get("Location")
@@ -443,13 +584,67 @@ def update_definition(definition: dict) -> None:
         print("  applied synchronously")
 
 
+def verify_definition(expected_entities: set[str]) -> None:
+    h = {"Authorization": "Bearer " + FABRIC_TOKEN, "Content-Type": "application/json"}
+    url = f"{FABRIC}/workspaces/{WS}/ontologies/{ONT}/getDefinition"
+    response = _request("POST", url, headers=h, json={})
+    if response.status_code == 202:
+        operation_url = response.headers.get("Location")
+        if not operation_url:
+            raise RuntimeError("Ontology getDefinition returned 202 without a Location header.")
+        for _ in range(30):
+            time.sleep(4)
+            operation = _request("GET", operation_url, headers=h)
+            operation.raise_for_status()
+            payload = operation.json()
+            if payload.get("status") in ("Succeeded", "Completed"):
+                resource_url = payload.get("resourceLocation")
+                if not resource_url:
+                    raise RuntimeError("Ontology getDefinition completed without a resourceLocation.")
+                response = _request("GET", resource_url, headers=h)
+                break
+            if payload.get("status") == "Failed":
+                raise RuntimeError(f"Ontology getDefinition failed: {operation.text[:2000]}")
+        else:
+            raise RuntimeError("Ontology getDefinition timed out.")
+    response.raise_for_status()
+    paths = {
+        part.get("path")
+        for part in response.json().get("definition", {}).get("parts", [])
+        if part.get("path")
+    }
+    expected_paths = {
+        f"entities/{entity}.tmdl" for entity in expected_entities
+    } | {
+        f"tables/{ENTITIES[entity].table}.tmdl" for entity in expected_entities
+    }
+    missing = sorted(expected_paths - paths)
+    if missing:
+        raise RuntimeError(
+            "Fabric accepted the ontology update but did not persist required TMDL parts: "
+            + ", ".join(missing)
+        )
+    if len(expected_entities) > 1:
+        relationship_parts = {"relationships.tmdl", "entityRelationships.tmdl"}
+        missing_relationships = sorted(relationship_parts - paths)
+        if missing_relationships:
+            raise RuntimeError(
+                "Fabric did not persist ontology relationship parts: "
+                + ", ".join(missing_relationships)
+            )
+    print(
+        f"  verified: {len(expected_entities)} entities, "
+        f"{len(expected_entities)} Direct Lake tables"
+    )
+
+
 def _poll(op_url: str | None) -> None:
     if not op_url:
         return
     h = {"Authorization": f"Bearer {FABRIC_TOKEN}"}
     for _ in range(30):
         time.sleep(4)
-        r = requests.get(op_url, headers=h)
+        r = _request("GET", op_url, headers=h)
         if not r.headers.get("content-type", "").startswith("application/json"):
             continue
         status = r.json().get("status")
@@ -471,17 +666,17 @@ def get_or_create_ontology() -> str:
     """Return the ontology item id, creating the item (by name) if it does not exist."""
     h = {"Authorization": f"Bearer {FABRIC_TOKEN}", "Content-Type": "application/json"}
     base = f"{FABRIC}/workspaces/{WS}/ontologies"
-    existing = requests.get(base, headers=h).json().get("value", [])
+    existing = _request("GET", base, headers=h).json().get("value", [])
     for o in existing:
         if o.get("displayName") == ONTOLOGY_NAME:
             print(f"  ontology exists: {ONTOLOGY_NAME} ({o['id']})")
             return o["id"]
     body = {"displayName": ONTOLOGY_NAME, "description": "AMC IQ precision-oncology domain ontology for clinical-trial readiness: patients, trials, criteria, biomarkers, labs, treatments, and care-team workflow."}
-    r = requests.post(base, headers=h, json=body)
+    r = _request("POST", base, headers=h, json=body)
     _lro_wait(r)
     for _ in range(15):
         time.sleep(3)
-        for o in requests.get(base, headers=h).json().get("value", []):
+        for o in _request("GET", base, headers=h).json().get("value", []):
             if o.get("displayName") == ONTOLOGY_NAME:
                 print(f"  ontology created: {ONTOLOGY_NAME} ({o['id']})")
                 return o["id"]
@@ -491,18 +686,18 @@ def get_or_create_ontology() -> str:
 def attach_to_data_agent() -> None:
     """Attach the ontology as a FabricItem datasource to the published Data Agent and publish."""
     h = {"Authorization": f"Bearer {FABRIC_TOKEN}", "Content-Type": "application/json"}
-    items = requests.get(f"{FABRIC}/workspaces/{WS}/items", headers=h).json().get("value", [])
+    items = _request("GET", f"{FABRIC}/workspaces/{WS}/items", headers=h).json().get("value", [])
     da = next((i for i in items if i.get("type") == "DataAgent" and i.get("displayName") == DATA_AGENT_NAME), None)
     if not da:
         print(f"  Data Agent '{DATA_AGENT_NAME}' not found; skipping attach.")
         return
     b = f"{FABRIC}/workspaces/{WS}/dataAgents/{da['id']}"
-    sources = requests.get(f"{b}/staging/datasources", headers=h).json().get("value", [])
+    sources = _request("GET", f"{b}/staging/datasources", headers=h).json().get("value", [])
     if any(s.get("id") == ONT for s in sources):
         print("  ontology already attached to Data Agent.")
     else:
         body = {"type": "FabricItem", "itemReference": {"referenceType": "ById", "itemId": ONT, "workspaceId": WS}}
-        _lro_wait(requests.post(f"{b}/staging/datasources", headers=h, json=body))
+        _lro_wait(_request("POST", f"{b}/staging/datasources", headers=h, json=body))
         print("  ontology attached to Data Agent as FabricItem datasource.")
     # Add the documented group-by GQL instruction and (re)publish.
     instr = (
@@ -514,10 +709,21 @@ def attach_to_data_agent() -> None:
         "like NCT99004324. Give precise values with dates. Support group by in GQL. Do not give medical advice."
     )
     try:
-        requests.patch(f"{b}/staging/settings", headers=h, json={"aiInstructions": instr})
+        _request("PATCH", f"{b}/staging/settings", headers=h, json={"aiInstructions": instr})
     except Exception as exc:  # noqa: BLE001
         print(f"  (settings patch skipped: {exc})")
-    _lro_wait(requests.post(f"{b}/staging/publish", headers=h, json={"publishedDescription": "AMC IQ Fabric Data Agent: Lakehouse + Fabric IQ Ontology (NL2Ontology)"}))
+    _lro_wait(
+        _request(
+            "POST",
+            f"{b}/staging/publish",
+            headers=h,
+            json={
+                "publishedDescription": (
+                    "AMC IQ Fabric Data Agent: Lakehouse + Fabric IQ Ontology (NL2Ontology)"
+                )
+            },
+        )
+    )
     print("  Data Agent published with ontology source.")
 
 
@@ -529,6 +735,8 @@ def main() -> None:
     definition = build_definition()
     print(f"  parts: {len(definition['definition']['parts'])}")
     update_definition(definition)
+    expected_entities = {ONLY_ENTITY} if ONLY_ENTITY else set(ENTITIES)
+    verify_definition(expected_entities)
     # Keep the Ontology source detached while its system-owned child GraphModel is empty. The
     # supported standalone GraphModel is provisioned and attached by provision_fabric_graph.py.
     if not ONLY_ENTITY and os.environ.get("ATTACH_ONTOLOGY_TO_DA"):

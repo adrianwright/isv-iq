@@ -113,22 +113,23 @@ class KeyVaultCertificateCredentialProvider:
             return dict(self._credential)
 
     def _load(self) -> dict[str, str]:
-        missing = [
-            name
-            for name, value in (
-                ("AZURE_CLIENT_ID", self.settings.AZURE_CLIENT_ID),
-                ("WORK_IQ_KEY_VAULT_URL", self.settings.WORK_IQ_KEY_VAULT_URL),
-                (
-                    "WORK_IQ_CLIENT_CERTIFICATE_SECRET_NAME",
-                    self.settings.WORK_IQ_CLIENT_CERTIFICATE_SECRET_NAME,
-                ),
-            )
-            if not value.strip()
-        ]
-        if missing:
-            raise CertificateCredentialError(
-                f"Production Work IQ certificate configuration is missing: {', '.join(missing)}"
-            )
+        if not self.settings.WORK_IQ_CLIENT_CERTIFICATE_PFX.strip():
+            missing = [
+                name
+                for name, value in (
+                    ("AZURE_CLIENT_ID", self.settings.AZURE_CLIENT_ID),
+                    ("WORK_IQ_KEY_VAULT_URL", self.settings.WORK_IQ_KEY_VAULT_URL),
+                    (
+                        "WORK_IQ_CLIENT_CERTIFICATE_SECRET_NAME",
+                        self.settings.WORK_IQ_CLIENT_CERTIFICATE_SECRET_NAME,
+                    ),
+                )
+                if not value.strip()
+            ]
+            if missing:
+                raise CertificateCredentialError(
+                    f"Production Work IQ certificate configuration is missing: {', '.join(missing)}"
+                )
 
         secret_value = self._get_secret_value()
         try:
@@ -159,6 +160,9 @@ class KeyVaultCertificateCredentialProvider:
         }
 
     def _get_secret_value(self) -> str:
+        if self.settings.WORK_IQ_CLIENT_CERTIFICATE_PFX.strip():
+            return self.settings.WORK_IQ_CLIENT_CERTIFICATE_PFX
+
         if self._secret_client is not None:
             secret = self._secret_client.get_secret(
                 self.settings.WORK_IQ_CLIENT_CERTIFICATE_SECRET_NAME

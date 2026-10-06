@@ -77,6 +77,7 @@ class Orchestrator:
             result = source.query(context)
             result.status = "complete" if result.citations else "needs_review"
         except Exception as exc:  # noqa: BLE001 - resilience: one failed layer must not break the rest
+            logger.exception("%s retrieval failed", source.label)
             try:
                 result = self._fallbacks[source.name].query(context)
                 result.status = "failed"

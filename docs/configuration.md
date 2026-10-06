@@ -17,8 +17,8 @@ missing or still use public placeholder values.
 |---|---|---|
 | `USE_LIVE_FOUNDRY` | `SEARCH_ENDPOINT`, `FOUNDRY_KB_NAME` | Also needs the core connected set: `AZURE_TENANT_ID`, `API_AUDIENCE`, `API_REQUIRED_SCOPE`, `FABRIC_WORKSPACE_ID`, `FABRIC_DATA_AGENT_ID`, `PROJECT_ENDPOINT`, `ELIGIBILITY_EVALUATOR_AGENT` |
 | `USE_LIVE_FABRIC` | Same core connected set | Fabric capacity must be Active |
-| `USE_LIVE_WORK` | `WORK_IQ_CLIENT_ID`, `WORK_IQ_ENDPOINT`, `WORK_IQ_SCOPE`; in production also `AZURE_CLIENT_ID`, `WORK_IQ_KEY_VAULT_URL`, `WORK_IQ_CLIENT_CERTIFICATE_SECRET_NAME`; in non-production connected mode also `WORK_IQ_CLIENT_CERTIFICATE`, `WORK_IQ_CLIENT_CERTIFICATE_THUMBPRINT` | Requires authenticated user and a seeded M365 tenant |
-| `USE_LIVE_WEB` | `SEARCH_ENDPOINT`, `WEB_KB_NAME` | Web IQ is represented by a Bing-backed AI Search knowledge base |
+| `USE_LIVE_WORK` | `WORK_IQ_CLIENT_ID`, `WORK_IQ_ENDPOINT`, `WORK_IQ_SCOPE`; in production either `WORK_IQ_CLIENT_CERTIFICATE_PFX` or `AZURE_CLIENT_ID`, `WORK_IQ_KEY_VAULT_URL`, `WORK_IQ_CLIENT_CERTIFICATE_SECRET_NAME`; in non-production connected mode also `WORK_IQ_CLIENT_CERTIFICATE`, `WORK_IQ_CLIENT_CERTIFICATE_THUMBPRINT` | Requires authenticated user and a seeded M365 tenant |
+| `USE_LIVE_WEB` | Native: `WEB_IQ_ENDPOINT`, `WEB_IQ_API_KEY`; fallback: `SEARCH_ENDPOINT`, `WEB_KB_NAME` | Native Microsoft Web IQ is preferred when its API key is configured |
 | `USE_LIVE_AGENT` | `PROJECT_ENDPOINT`, `AGENT_NAME` | Hosted Foundry agent is optional |
 | `USE_LIVE_SPECIALISTS` | `PROJECT_ENDPOINT`; individual `SPECIALIST_*_AGENT` names for each role in `LIVE_SPECIALIST_ROLES` | Requires `USE_MULTI_AGENT=true` |
 
@@ -50,7 +50,7 @@ missing or still use public placeholder values.
 | Variable | Description |
 |---|---|
 | `AZURE_TENANT_ID` | Entra tenant GUID for token validation |
-| `API_AUDIENCE` | Accepted audience URI (`api://your-api-client-id`) |
+| `API_AUDIENCE` | API application client ID; validation also accepts its exact `api://` App ID URI alias |
 | `API_REQUIRED_SCOPE` | Delegated scope claim (`access_as_user`) |
 | `AZURE_CLIENT_ID` | User-assigned managed identity client ID, production Work IQ path |
 
@@ -61,6 +61,8 @@ missing or still use public placeholder values.
 | `SEARCH_ENDPOINT` | `https://<service>.search.windows.net` |
 | `FOUNDRY_KB_NAME` | Knowledge base name for Foundry IQ |
 | `WEB_KB_NAME` | Knowledge base name for the Bing-backed Web IQ stand-in |
+| `WEB_IQ_ENDPOINT` | Native Microsoft Web IQ endpoint; defaults to `https://api.microsoft.ai/v3/search/web` |
+| `WEB_IQ_API_KEY` | Native Web IQ key; inject as a server-side secret, never commit or expose to the browser |
 | `SEARCH_API_VERSION` | `2026-05-01-preview` |
 | `PROJECT_ENDPOINT` | Foundry project HTTPS endpoint |
 | `AGENT_NAME` | Hosted agent resource name |
@@ -93,9 +95,16 @@ missing or still use public placeholder values.
 | `WORK_IQ_SCOPE` | `api://workiq.svc.cloud.microsoft/.default` |
 | `WORK_IQ_KEY_VAULT_URL` | Key Vault URI for the production OBO certificate |
 | `WORK_IQ_CLIENT_CERTIFICATE_SECRET_NAME` | Secret name in Key Vault |
+| `WORK_IQ_CLIENT_CERTIFICATE_PFX` | Base64 PFX injected as a server-side production secret when runtime Key Vault access is unavailable |
 | `WORK_IQ_CLIENT_CERTIFICATE` | Base64 PFX for manual non-production connected runs, never commit |
 | `WORK_IQ_CLIENT_CERTIFICATE_THUMBPRINT` | Certificate thumbprint for the same path |
 | `WORK_IQ_TIMEOUT_SECONDS` | Default `60` |
+
+For Azure deployment, `WEB_IQ_API_KEY_SECRET_NAME` names the source secret in Key Vault. ARM
+retrieves it through the vault's template-deployment boundary and writes it to the encrypted
+Container Apps secret store; the running container receives only a secret reference. This supports
+tenants that enforce disabled Key Vault public network access without placing the key in `azd`
+environment state.
 | `WORK_IQ_CERTIFICATE_CACHE_SECONDS` | Default `300` |
 | `WORK_IQ_TIMEZONE` | IANA timezone string, default `America/Chicago` |
 | `WORK_IQ_TIMEZONE_OFFSET_MINUTES` | UTC offset in minutes, default `-300` |

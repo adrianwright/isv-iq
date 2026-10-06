@@ -70,7 +70,7 @@ class AccessTokenValidator:
                 token,
                 signing_key.key,
                 algorithms=["RS256"],
-                audience=self.settings.API_AUDIENCE,
+                audience=self.settings.token_audiences,
                 issuer=self.settings.token_issuer,
                 options={"require": ["exp", "iat", "iss", "aud", "tid", "sub"]},
             )

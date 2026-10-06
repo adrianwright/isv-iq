@@ -25,6 +25,7 @@ CSV_DIR = Path(os.environ.get("CSV_DIR", "data/fabric"))
 
 ONELAKE = "https://onelake.dfs.fabric.microsoft.com"
 FABRIC = "https://api.fabric.microsoft.com/v1"
+RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 
 # All 16 ontology entity tables (data/fabric/*.csv). The original proof-of-concept loaded only the first 7;
 # the Fabric Ontology binds Criterion, Biomarker, Amendment, and the rest, so the full cohort is
@@ -37,11 +38,24 @@ TABLES = [
 ]
 
 
+def _request(method: str, url: str, **kwargs) -> requests.Response:
+    for attempt in range(5):
+        try:
+            response = requests.request(method, url, timeout=60, **kwargs)
+            if response.status_code not in RETRYABLE_STATUS_CODES:
+                return response
+        except requests.RequestException:
+            if attempt == 4:
+                raise
+        time.sleep(min(2**attempt, 16))
+    return response
+
+
 def _dfs(method: str, path: str, **kwargs) -> requests.Response:
     url = f"{ONELAKE}/{WS}/{LH}/{path}"
     headers = kwargs.pop("headers", {})
     headers["Authorization"] = f"Bearer {ONELAKE_TOKEN}"
-    return requests.request(method, url, headers=headers, **kwargs)
+    return _request(method, url, headers=headers, **kwargs)
 
 
 def upload_csv(name: str) -> None:
@@ -68,7 +82,7 @@ def load_table(name: str) -> None:
         "formatOptions": {"format": "Csv", "header": True, "delimiter": ","},
     }
     headers = {"Authorization": f"Bearer {FABRIC_TOKEN}", "Content-Type": "application/json"}
-    r = requests.post(url, json=body, headers=headers)
+    r = _request("POST", url, json=body, headers=headers)
     if r.status_code == 202:
         op = r.headers.get("Location")
         print(f"  load {name}: accepted, polling...")
@@ -86,7 +100,7 @@ def _poll(op_url: str | None) -> None:
     headers = {"Authorization": f"Bearer {FABRIC_TOKEN}"}
     for _ in range(30):
         time.sleep(4)
-        r = requests.get(op_url, headers=headers)
+        r = _request("GET", op_url, headers=headers)
         status = r.json().get("status") if r.headers.get("content-type", "").startswith("application/json") else None
         if status in ("Succeeded", "Completed"):
             print("    -> succeeded")

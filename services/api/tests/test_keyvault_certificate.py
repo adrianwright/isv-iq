@@ -135,6 +135,21 @@ def test_key_vault_provider_rejects_invalid_certificate_secret() -> None:
         provider.get_client_credential()
 
 
+def test_production_provider_uses_injected_pfx_without_key_vault() -> None:
+    secret_value, certificate = _certificate_secret()
+    settings = Settings(
+        _env_file=None,
+        APP_ENVIRONMENT="production",
+        WORK_IQ_CLIENT_CERTIFICATE_PFX=secret_value,
+    )
+    provider = KeyVaultCertificateCredentialProvider(settings)
+
+    credential = provider.get_client_credential()
+
+    assert credential["thumbprint"] == certificate.fingerprint(hashes.SHA1()).hex().upper()
+    assert credential["private_key"].startswith("-----BEGIN PRIVATE KEY-----")
+
+
 def test_initial_failure_uses_retry_backoff_instead_of_requerying_key_vault() -> None:
     settings = _production_settings()
     settings.WORK_IQ_CERTIFICATE_REFRESH_RETRY_SECONDS = 60

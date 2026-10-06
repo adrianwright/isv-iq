@@ -18,7 +18,7 @@ from app.config import Settings, get_settings
 from app.main import app
 
 TENANT_ID = "11111111-1111-1111-1111-111111111111"
-AUDIENCE = "api://22222222-2222-2222-2222-222222222222"
+AUDIENCE = "22222222-2222-2222-2222-222222222222"
 PRIVATE_KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
 
@@ -65,6 +65,11 @@ def test_validates_tenant_audience_and_scope() -> None:
     assert principal.tenant_id == TENANT_ID
     assert principal.subject == "user-123"
     assert "access_as_user" in principal.scopes
+
+
+def test_accepts_app_id_uri_audience_alias() -> None:
+    principal = _validator().validate(_token(aud=f"api://{AUDIENCE}"))
+    assert principal.subject == "user-123"
 
 
 @pytest.mark.parametrize(

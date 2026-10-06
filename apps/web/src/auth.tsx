@@ -39,6 +39,7 @@ function MsalAuthenticationBridge({ children }: { children: ReactNode }) {
           account,
           scopes: [apiScope],
           redirectUri,
+          forceRefresh: true,
         })
         return result.accessToken
       } catch (error) {

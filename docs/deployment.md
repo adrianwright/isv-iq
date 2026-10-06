@@ -11,7 +11,8 @@ used for safe reproducibility.
 The proof of concept's connected footprint is:
 - Azure Static Web Apps for the React UI,
 - Azure Container Apps for the FastAPI API,
-- Azure AI Search for Foundry IQ and the Web IQ stand-in,
+- Azure AI Search for Foundry IQ and the Web IQ fallback,
+- native Microsoft Web IQ for user-triggered external web evidence when an evaluation key is configured,
 - Microsoft Fabric for the Lakehouse and Data Agent,
 - Azure Key Vault for the Work IQ OBO certificate, and
 - operator-provided Foundry resources referenced by configuration.
@@ -62,7 +63,7 @@ The Bicep template provisions the application hosting layer:
 - Container App for the FastAPI API, port 8000
 - Azure Static Web App for the React/Vite UI
 - Azure Container Registry for `azd`-built API images
-- Azure Key Vault for the Work IQ OBO certificate
+- Azure Key Vault for the Work IQ OBO certificate and deployment-time Web IQ secret source
 - User-assigned managed identity shared by the API container and role assignments
 
 **Existing resources**, including Foundry, AI Search, and Fabric capacity, are **referenced by
@@ -79,7 +80,7 @@ Key parameters, all required and operator-supplied:
 | `fabricWorkspaceId` | Fabric workspace GUID |
 | `workIqClientId` | Confidential client app ID for Work IQ OBO |
 | `webClientId` | SPA public client app ID |
-| `apiAudience` | Accepted audience URI for token validation |
+| `apiAudience` | API application client ID; validation also accepts its exact `api://` App ID URI alias |
 | `eligibilityEvaluatorAgentName` | Foundry evaluator agent name |
 
 ## azd workflow

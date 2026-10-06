@@ -15,6 +15,9 @@ param identityClientId string
 param searchEndpoint string
 param foundryKbName string
 param webKbName string
+param webIqEndpoint string
+@secure()
+param webIqApiKey string
 param projectEndpoint string
 param fabricWorkspaceId string
 param fabricDataAgentId string
@@ -32,6 +35,8 @@ param tenantId string
 param apiAudience string
 param apiRequiredScope string
 param workIqClientId string
+@secure()
+param workIqClientCertificatePfx string
 param workIqClientCertificateSecretName string
 param workIqEndpoint string
 param workIqScope string
@@ -124,6 +129,16 @@ resource api 'Microsoft.App/containerApps@2024-03-01' = {
           identity: identityResourceId
         }
       ]
+      secrets: [
+        {
+          name: 'web-iq-api-key'
+          value: webIqApiKey
+        }
+        {
+          name: 'work-iq-client-certificate'
+          value: workIqClientCertificatePfx
+        }
+      ]
     }
     template: {
       scale: {
@@ -158,6 +173,14 @@ resource api 'Microsoft.App/containerApps@2024-03-01' = {
             {
               name: 'WEB_KB_NAME'
               value: webKbName
+            }
+            {
+              name: 'WEB_IQ_ENDPOINT'
+              value: webIqEndpoint
+            }
+            {
+              name: 'WEB_IQ_API_KEY'
+              secretRef: 'web-iq-api-key'
             }
             {
               name: 'PROJECT_ENDPOINT'
@@ -230,6 +253,10 @@ resource api 'Microsoft.App/containerApps@2024-03-01' = {
             {
               name: 'WORK_IQ_CLIENT_ID'
               value: workIqClientId
+            }
+            {
+              name: 'WORK_IQ_CLIENT_CERTIFICATE_PFX'
+              secretRef: 'work-iq-client-certificate'
             }
             {
               name: 'APP_ENVIRONMENT'

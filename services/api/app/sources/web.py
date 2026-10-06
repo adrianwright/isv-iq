@@ -87,8 +87,11 @@ class MockWebIQ:
 
 
 class LiveWebIQ:
-    """Live Web IQ adapter: queries the Bing-backed `web` knowledge base (amciq-web-kb) for
-    fresh external oncology context. Auth via DefaultAzureCredential (Search Index Data Reader)."""
+    """Live Web IQ adapter.
+
+    Prefer native Microsoft Web IQ when an API key is configured. Otherwise use the Bing-backed
+    Azure AI Search knowledge base retained as the generally available fallback.
+    """
 
     name = Source.WEB
     label = "Web IQ"
@@ -105,16 +108,77 @@ class LiveWebIQ:
         return DefaultAzureCredential().get_token("https://search.azure.com/.default").token
 
     def query(self, context: QueryContext) -> SourceResult:
-        import httpx
+        if self.settings.WEB_IQ_API_KEY.strip():
+            return self._query_native(context)
+        return self._query_search_knowledge_base(context)
 
+    def _question(self, context: QueryContext) -> str:
         patient = next((p for p in context.registry["patients"] if p["id"] == context.patient_id), {})
         biomarkers = ", ".join(str(b) for b in patient.get("biomarkers", [])) or "EGFR exon 20 insertion"
         diagnosis = str(patient.get("diagnosis", "metastatic NSCLC"))
-        question = (
+        return (
             f"The user asks: {context.question}\n"
             f"Provide only relevant external trial-registry or treatment-landscape context for "
             f"{biomarkers} {diagnosis} and trial {context.trial_id}."
         )
+
+    def _query_native(self, context: QueryContext) -> SourceResult:
+        import httpx
+
+        question = self._question(context)
+        payload = {
+            "query": question,
+            "maxResults": 5,
+            "contentFormat": "passage",
+            "maxLength": 8000,
+        }
+        headers = {
+            "x-apikey": self.settings.WEB_IQ_API_KEY,
+            "Content-Type": "application/json",
+        }
+        with httpx.Client(timeout=90) as client:
+            response = client.post(self.settings.WEB_IQ_ENDPOINT, json=payload, headers=headers)
+            response.raise_for_status()
+            data = response.json()
+
+        results = data.get("webResults", [])
+        if not isinstance(results, list):
+            results = []
+        citations = [
+            Evidence(
+                refId=f"r{index + 7}",
+                source=Source.WEB,
+                title=str(item.get("title") or "External web result"),
+                snippet=str(item.get("content") or "")[:500],
+                url=str(item.get("url") or ""),
+                sourceType="web",
+            )
+            for index, item in enumerate(results[:3])
+            if isinstance(item, dict) and item.get("url")
+        ]
+        context_text = "\n\n".join(
+            str(item.get("content") or "")
+            for item in results[:5]
+            if isinstance(item, dict) and item.get("content")
+        ).strip()
+        return SourceResult(
+            source=self.name,
+            label=self.label,
+            queries=[question],
+            summary="Web IQ (native): current external trial-registry and treatment-landscape context.",
+            citations=citations,
+            facts={
+                "external_context": context_text[:4000],
+                "registry_status": None,
+                "reference_count": len(results),
+            },
+            duration_ms=0,
+        )
+
+    def _query_search_knowledge_base(self, context: QueryContext) -> SourceResult:
+        import httpx
+
+        question = self._question(context)
         url = f"{self._endpoint}/knowledgebases/{self._kb}/retrieve?api-version={self._api_version}"
         payload = {"messages": [{"role": "user", "content": [{"type": "text", "text": question}]}]}
         headers = {"Authorization": f"Bearer {self._token()}", "Content-Type": "application/json"}

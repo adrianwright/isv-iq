@@ -3,6 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
+from uuid import UUID
 
 from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -99,6 +100,7 @@ class Settings(BaseSettings):
     WORK_IQ_CLIENT_ID: str = ""
     WORK_IQ_KEY_VAULT_URL: str = ""
     WORK_IQ_CLIENT_CERTIFICATE_SECRET_NAME: str = ""
+    WORK_IQ_CLIENT_CERTIFICATE_PFX: str = ""
     WORK_IQ_CLIENT_CERTIFICATE: str = ""
     WORK_IQ_CLIENT_CERTIFICATE_THUMBPRINT: str = ""
     WORK_IQ_CLIENT_PUBLIC_CERTIFICATE: str = ""
@@ -107,7 +109,8 @@ class Settings(BaseSettings):
     WORK_IQ_TIMEOUT_SECONDS: float = 60.0
     WORK_IQ_TIMEZONE: str = "America/Chicago"
     WORK_IQ_TIMEZONE_OFFSET_MINUTES: int = -300
-    WEB_IQ_ENDPOINT: str = ""
+    WEB_IQ_ENDPOINT: str = "https://api.microsoft.ai/v3/search/web"
+    WEB_IQ_API_KEY: str = ""
     MODEL_DEPLOYMENT: str = ""
     AGENT_NAME: str = ""
     PROJECT_ENDPOINT: str = ""
@@ -159,7 +162,10 @@ class Settings(BaseSettings):
         if self.USE_LIVE_FOUNDRY:
             required.update({"SEARCH_ENDPOINT", "FOUNDRY_KB_NAME"})
         if self.USE_LIVE_WEB:
-            required.update({"SEARCH_ENDPOINT", "WEB_KB_NAME"})
+            if self.WEB_IQ_API_KEY.strip():
+                required.add("WEB_IQ_ENDPOINT")
+            else:
+                required.update({"SEARCH_ENDPOINT", "WEB_KB_NAME"})
         if self.USE_LIVE_AGENT:
             required.update({"PROJECT_ENDPOINT", "AGENT_NAME"})
         if self.USE_LIVE_SPECIALISTS:
@@ -185,13 +191,14 @@ class Settings(BaseSettings):
                 }
             )
             if self.APP_ENVIRONMENT.strip().casefold() == "production":
-                required.update(
-                    {
-                        "AZURE_CLIENT_ID",
-                        "WORK_IQ_KEY_VAULT_URL",
-                        "WORK_IQ_CLIENT_CERTIFICATE_SECRET_NAME",
-                    }
-                )
+                if not self.WORK_IQ_CLIENT_CERTIFICATE_PFX.strip():
+                    required.update(
+                        {
+                            "AZURE_CLIENT_ID",
+                            "WORK_IQ_KEY_VAULT_URL",
+                            "WORK_IQ_CLIENT_CERTIFICATE_SECRET_NAME",
+                        }
+                    )
             else:
                 required.update(
                     {
@@ -245,6 +252,16 @@ class Settings(BaseSettings):
     @property
     def token_issuer(self) -> str:
         return f"https://login.microsoftonline.com/{self.AZURE_TENANT_ID}/v2.0"
+
+    @property
+    def token_audiences(self) -> tuple[str, ...]:
+        audience = self.API_AUDIENCE.strip()
+        app_id = audience.removeprefix("api://")
+        try:
+            UUID(app_id)
+        except ValueError:
+            return (audience,)
+        return (app_id, f"api://{app_id}")
 
     @property
     def jwks_url(self) -> str:

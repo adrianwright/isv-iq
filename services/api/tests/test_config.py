@@ -70,6 +70,26 @@ def test_production_live_work_requires_key_vault_certificate_source() -> None:
         settings.validate_runtime_configuration()
 
 
+def test_production_live_work_accepts_injected_pfx_certificate() -> None:
+    settings = Settings(
+        _env_file=None,
+        APP_ENVIRONMENT="production",
+        USE_LIVE_WORK=True,
+        AZURE_TENANT_ID="00000000-0000-0000-0000-000000000001",
+        API_AUDIENCE="api://00000000-0000-0000-0000-000000000002",
+        FABRIC_WORKSPACE_ID="00000000-0000-0000-0000-000000000003",
+        FABRIC_DATA_AGENT_ID="00000000-0000-0000-0000-000000000004",
+        PROJECT_ENDPOINT="https://example.services.ai.azure.com/api/projects/example",
+        ELIGIBILITY_EVALUATOR_AGENT="eligibility-evaluator",
+        WORK_IQ_CLIENT_ID="00000000-0000-0000-0000-000000000005",
+        WORK_IQ_ENDPOINT="https://example.invalid",
+        WORK_IQ_SCOPE="api://example/.default",
+        WORK_IQ_CLIENT_CERTIFICATE_PFX="base64-pfx",
+    )
+
+    settings.validate_runtime_configuration()
+
+
 def test_local_live_work_requires_environment_certificate_source() -> None:
     settings = Settings(
         _env_file=None,
