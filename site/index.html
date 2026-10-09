@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ISV IQ - Microsoft IQ for sales renewal and expansion intelligence</title>
-<meta name="description" content="A synthetic proof of concept that combines Foundry IQ, Fabric IQ, Work IQ, and Web IQ to answer a sales renewal question with cited evidence and human review.">
+<meta name="description" content="A synthetic proof of concept that combines Foundry IQ, Fabric IQ, Work IQ, and Web IQ to assess Contoso's churn risk with cited evidence and human review.">
 <meta name="theme-color" content="#f3efe6">
 <meta property="og:type" content="website">
 <meta property="og:title" content="ISV IQ - Microsoft IQ for sales renewal and expansion intelligence">
-<meta property="og:description" content="One sales renewal question, answered from sources nobody keeps together. Cited evidence, human review.">
+<meta property="og:description" content="Is Contoso at risk of churn? Answered from sources nobody keeps together. Cited evidence, human review.">
 <meta property="og:url" content="https://adrianwright.github.io/isv-iq/">
 <meta property="og:image" content="https://adrianwright.github.io/isv-iq/images/isv-why-it-matters.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -126,7 +126,6 @@
       <a href="#coalescing">Reconciliation</a>
       <a href="#finding">The finding</a>
       <a href="#method">Method</a>
-      <a href="#limits">Limits</a>
       <a href="https://github.com/adrianwright/isv-iq">Source</a>
     </nav>
   </div>
@@ -135,8 +134,8 @@
 <main class="sheet">
   <div class="opening">
     <div>
-      <h1>One sales renewal question, answered from <em>sources</em> nobody keeps together.</h1>
-      <p class="lede">A software company has to decide whether to raise a renewal forecast. The evidence sits with finance, legal, the account team and the outside world. This demo reads across all of them, shows its sources, and stops at a draft for a person to review.</p>
+      <h1>One churn question, answered from <em>sources</em> nobody keeps together.</h1>
+      <p class="lede">An account team has to decide whether Contoso is at risk of churn. The evidence sits in enterprise systems, policy and contracts, communications and public signals. This demo reads across all of them, shows its sources, and stops at a draft for a person to review.</p>
     </div>
   </div>
 
@@ -150,15 +149,15 @@
   <section id="coalescing" style="margin-bottom:56px">
     <p class="kicker">Guided reconciliation</p>
     <h2>The system decides, grounded in your rules.</h2>
-    <p class="intro">Evidence from every source lands in one place, and the system settles the answer. It does not leave that to whoever read the last email. Each source is trusted for what it knows best, and your rules set the order: a contract for terms, the finance system for money, the account team for promises, the web for the outside world. Claims are weighed by kind, never averaged.</p>
+    <p class="intro">Evidence from every source lands in one place, and the system settles the answer. It does not leave that to whoever read the last email. Each source is trusted for what it knows best: enterprise systems for usage, spend and support; policy and contracts for terms and approvals; communications for customer sentiment and promises; public signals for outside changes. Claims are weighed by kind, never averaged.</p>
     <table>
       <caption>Who is trusted first, by kind of claim</caption>
       <thead><tr><th>Claim</th><th>Trusted first</th><th>Then</th></tr></thead>
       <tbody>
-        <tr><th>Numbers<small>ARR, cases, invoices</small></th><td data-l="Trusted first">Fabric IQ, the system of record</td><td data-l="Then">Foundry IQ, Work IQ, Web IQ</td></tr>
-        <tr><th>Rules<small>terms, SLAs, approvals</small></th><td data-l="Trusted first">Foundry IQ, the signed documents</td><td data-l="Then">Fabric IQ, Work IQ, Web IQ</td></tr>
-        <tr><th>Commitments<small>what was promised</small></th><td data-l="Trusted first">Work IQ, mail, meetings and chats</td><td data-l="Then">Foundry IQ, Fabric IQ, Web IQ</td></tr>
-        <tr><th>Outside facts<small>market, news, peers</small></th><td data-l="Trusted first">Web IQ</td><td data-l="Then">Foundry IQ, Fabric IQ, Work IQ</td></tr>
+        <tr><th>Enterprise Systems<small>usage and adoption, spend and billing, support health</small></th><td data-l="Trusted first">Fabric IQ</td><td data-l="Then">Work IQ, Web IQ, Foundry IQ</td></tr>
+        <tr><th>Policy, Contracts and Governance<small>terms, approvals, service commitments</small></th><td data-l="Trusted first">Foundry IQ</td><td data-l="Then">Fabric IQ, Work IQ, Web IQ</td></tr>
+        <tr><th>Communications<small>emails, meetings, customer sentiment</small></th><td data-l="Trusted first">Work IQ</td><td data-l="Then">Fabric IQ, Foundry IQ, Web IQ</td></tr>
+        <tr><th>Public Signals<small>news, competition, leadership changes</small></th><td data-l="Trusted first">Web IQ</td><td data-l="Then">Work IQ, Fabric IQ, Foundry IQ</td></tr>
       </tbody>
     </table>
     <div class="cols" style="margin-top:40px">
@@ -169,24 +168,24 @@
   </section>
 
   <blockquote class="quote">
-    <p>“Should we increase the Contoso Unified School District renewal forecast from $2.2M to the full $2.4M?”</p>
+    <p>“Is Contoso at risk of churn?”</p>
     <cite>The question, as asked</cite>
   </blockquote>
 
   <section id="finding">
     <p class="kicker">The finding</p>
-    <h2>Not yet. Hold the forecast at $2.2M.</h2>
+    <h2>Yes. Contoso is at risk of churn.</h2>
     <div class="finding">
       <div class="verdict">
         <p class="kicker">Verdict</p>
-        <strong>Not yet</strong>
-        <p>Two open priority-one cases and a missing executive response stand between this renewal and the full amount. A drafted next action names an owner. It has not been submitted.</p>
+        <strong>At risk</strong>
+        <p>Two open priority-one cases, declining adoption and an uncertain executive response threaten the renewal. A drafted next action names an owner. It has not been submitted.</p>
       </div>
       <div>
         <ul class="claims">
-          <li>The usage and billing data support the larger figure, but <span class="no">two P1 cases are still open</span> against the contract’s service commitments.</li>
-          <li>The account team promised the customer a response that the record does not show as delivered.</li>
-          <li>Approval rules in the contract require resolution before the forecast moves.</li>
+          <li>Usage is declining and <span class="no">two P1 cases are still open</span>, despite current payment.</li>
+          <li>The account team has recorded customer concerns and a pending executive response.</li>
+          <li>Contract service commitments and public leadership changes add context to the renewal risk.</li>
         </ul>
         <div class="notes">
           <p><span>1</span>Fabric IQ: cases, SLA breaches and seat adoption.</p>
@@ -202,22 +201,13 @@
     <p class="kicker">Method</p>
     <h2>Parallel retrieval, stated uncertainty, a person at the end.</h2>
     <ol class="steps">
-      <li><div><b>Interpret the question</b><span>Resolve the account, the renewal, the decision asked for and what is missing.</span></div></li>
+      <li><div><b>Interpret the question</b><span>Resolve the account, the renewal, the churn risk and what is missing.</span></div></li>
       <li><div><b>Retrieve in parallel</b><span>Ask every connected source at the same time, and time each one.</span></div></li>
       <li><div><b>Guided reconciliation</b><span>Separate what is met from blockers, contradictions and gaps.</span></div></li>
       <li><div><b>Draft the next action</b><span>Return citations, an owner and a task that stays unsubmitted.</span></div></li>
     </ol>
   </section>
 
-  <section id="limits">
-    <p class="kicker">Limits</p>
-    <h2>What this is, and what it is not.</h2>
-    <div class="cols">
-      <div><h3>Connected</h3><p>Live Foundry, Fabric, Work and Web integrations run on Azure. Fabric holds the structured data and Microsoft 365 holds the team context.</p></div>
-      <div><h3>Reproducible</h3><p>Built to be deployed to Azure. Where live services are unavailable, the walkthrough falls back to deterministic synthetic data so a demo always behaves the same.</p></div>
-      <div><h3>Fictional</h3><p>Every district, contract, person and figure is invented. The output is a draft, not a commitment or a forecast of record.</p></div>
-    </div>
-  </section>
 </main>
 
 <footer>
