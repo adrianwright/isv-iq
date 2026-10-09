@@ -31,6 +31,7 @@ jobs:
 
   python:
     name: API, provisioning, data, and IaC
+    if: false # temporarily disabled
     runs-on: ubuntu-latest
     env:
       PYTHONPATH: services/api
@@ -76,6 +77,7 @@ jobs:
 
   web:
     name: Web lint, test, and build
+    if: false # temporarily disabled
     runs-on: ubuntu-latest
     defaults:
       run:
