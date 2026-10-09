@@ -657,6 +657,8 @@ def _read_isv_work_document(path: Path) -> tuple[dict[str, Any], str]:
 
 def _isv_work_focus(question: str) -> str:
     lower = question.casefold()
+    if "risk of churn" in lower:
+        return "Find customer sentiment, renewal intentions, support concerns, and the CIO's response."
     if "accelerate" in lower and ("$300k" in lower or "fabrikam" in lower):
         return (
             "Find executive sponsorship, customer demand, adoption strength, architecture "
@@ -675,6 +677,8 @@ def _isv_work_focus(question: str) -> str:
 
 def _isv_scenario_focus(question: str) -> str:
     lower = question.casefold()
+    if "risk of churn" in lower:
+        return "whether the customer is at risk of churn"
     if "accelerate" in lower and ("$300k" in lower or "fabrikam" in lower):
         return "whether the AI Automation expansion should be accelerated now"
     if "price-protected" in lower or "october 13" in lower:
