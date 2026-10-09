@@ -19,11 +19,11 @@ export type QuestionCategory = (typeof questionCategories)[number]
 export const questionLibrary: QuestionExample[] = [
   {
     category: 'Understand',
-    short: 'Should we reduce the renewal forecast?',
+    short: 'Should we increase the renewal forecast?',
     accountId: 'ACC-1001',
     renewalId: 'REN-1001',
     prompt:
-      'Should we continue forecasting the full $2.4M Alder Creek Unified School District renewal, or reduce the forecast now? Return a Yes, No, or Not yet verdict with confidence, criteria met, criteria not met, contradictory evidence, missing evidence, and the next forecast action.',
+      'Should we increase the Alder Creek Unified School District renewal forecast from $2.2M to the full $2.4M ARR? Return a Yes, No, or Not yet verdict with confidence, criteria met, criteria not met, contradictory evidence, missing evidence, and the next forecast action.',
   },
   {
     category: 'Prepare',

@@ -11,15 +11,14 @@ prompts:
     intent: renewal_forecast
     category: understand
     text: >-
-      Should we continue forecasting the full $2.4M Alder Creek Unified School District
-      renewal, or reduce
-      the forecast now? Return a Yes, No, or Not yet verdict with confidence, criteria
+      Should we increase the Alder Creek Unified School District renewal forecast from $2.2M
+      to the full $2.4M ARR? Return a Yes, No, or Not yet verdict with confidence, criteria
       met, criteria not met, contradictory evidence, missing evidence, and the next
       forecast action.
     required_iqs: [fabric, foundry, work, web]
     expected_outcomes:
       - Full-value forecast decision
-      - Quantified contraction exposure
+      - Quantified upside and downside to the forecast
       - Evidence supporting and weakening the forecast
       - Forecast action and confidence
   - id: proposal-readiness

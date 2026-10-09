@@ -62,7 +62,7 @@ def test_isv_prompt_intent_changes_the_narrative_and_action() -> None:
     ("question", "account_id", "renewal_id", "expected_intent", "answer_marker"),
     [
         (
-            "Should we continue forecasting the full $2.4M renewal, or reduce the forecast now?",
+            "Should we increase the renewal forecast from $2.2M to the full $2.4M?",
             "ACC-1001",
             "REN-1001",
             "renewal_forecast",
@@ -189,7 +189,7 @@ def test_isv_orchestrator_times_sources_that_report_no_duration() -> None:
 
 def test_isv_decisions_have_distinct_result_shapes() -> None:
     scenarios = {
-        "renewal_forecast": "Should we continue forecasting the full $2.4M renewal?",
+        "renewal_forecast": "Should we increase the renewal forecast to the full $2.4M?",
         "proposal_readiness": "Are we ready to send the price-protected proposal by October 13?",
         "expansion_gate": "Should we fund the $450K architecture workshop?",
         "expansion_acceleration": (

@@ -668,7 +668,7 @@ def _isv_work_focus(question: str) -> str:
         return "Find AI Automation demand, sponsor interest, architecture ownership, specialist capacity, and workshop plans."
     if "exit renewal recovery" in lower or "exit criteria" in lower:
         return "Find support recovery acceptance, commitment completion, payment confirmation, adoption recovery, and executive sentiment."
-    if "full $2.4m" in lower or "reduce the forecast" in lower:
+    if "increase the" in lower and "forecast" in lower:
         return "Find customer sentiment, the three-year proposal request, unresolved concerns, and open commitments."
     return "Find customer sentiment, account-team decisions, and the three open commitments."
 
@@ -683,7 +683,7 @@ def _isv_scenario_focus(question: str) -> str:
         return "whether the AI Automation opportunity is ready for a funded architecture workshop"
     if "exit renewal recovery" in lower or "exit criteria" in lower:
         return "whether the account has met the evidence required to exit renewal recovery"
-    return "whether the full renewal value should remain in the forecast"
+    return "whether the renewal forecast should be increased to the full $2.4M"
 
 
 def _isv_snippet(text: str, terms: tuple[str, ...], max_len: int = 360) -> str:
