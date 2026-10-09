@@ -8,6 +8,10 @@ The flagship scenario is **Customer Renewal and Expansion Intelligence** for the
 Creek Unified School District account, with Fabrikam Unified School District as a positive expansion
 contrast in a five-school-district renewal portfolio.
 
+![Why this matters: one renewal question, four places the answer lives](docs/images/isv-why-it-matters.png)
+
+An [interactive version](docs/isv-why-it-matters.html) lists the specific data in each place.
+
 The application combines:
 
 - **Fabric IQ** for account, subscription, usage, support, invoice, renewal, and opportunity facts.
