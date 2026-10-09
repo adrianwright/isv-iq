@@ -8,7 +8,7 @@ The flagship scenario is **Customer Renewal and Expansion Intelligence** for the
 Contoso Unified School District account, with Fabrikam Unified School District as a positive expansion
 contrast in a five-school-district renewal portfolio.
 
-![Why this matters: one renewal question, four places the answer lives](docs/images/isv-why-it-matters.png?v=3)
+![Why this matters: one renewal question, at least four sources](docs/images/isv-why-it-matters.png?v=4)
 
 An [interactive version](docs/isv-why-it-matters.html) lists the specific data in each place.
 
