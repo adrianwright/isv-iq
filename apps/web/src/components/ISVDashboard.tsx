@@ -215,6 +215,21 @@ export function ISVDashboard({ result, trace }: { result: ISVAskResult; trace: T
               {result.missingData.map((item) => <li key={item}><AlertTriangle size={14} /><span>{item}</span></li>)}
             </ul>
           </section>
+          {result.reconciliation && (
+            <section className="rail-card">
+              <div className="rail-card-head">Guided reconciliation</div>
+              <p className="muted">
+                {result.reconciliation.sourcesUsed.length} sources weighed by claim type.
+                Records win on conflict. Confidence: {result.reconciliation.confidence}.
+                {result.reconciliation.narration === 'model' ? ' Narrated by a model.' : ''}
+              </p>
+              <ul className="rail-steps">
+                {result.reconciliation.conflicts.length === 0
+                  ? <li><span>No conflicts between sources and records.</span></li>
+                  : result.reconciliation.conflicts.map((item) => <li key={item}><AlertTriangle size={14} /><span>{item}</span></li>)}
+              </ul>
+            </section>
+          )}
           <AssessmentSteps trace={trace} />
           <section className="rail-card safety-notice">
             <div className="rail-card-head">Demo boundary</div>

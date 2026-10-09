@@ -48,7 +48,7 @@ colorama==0.4.6 ; sys_platform == 'win32'
     #   click
     #   pytest
     #   tqdm
-cryptography==49.0.0
+cryptography==50.0.0
     # via
     #   azure-identity
     #   azure-storage-blob
@@ -135,7 +135,7 @@ pydantic-settings==2.14.2
     #   mcp
 pygments==2.20.0
     # via pytest
-pyjwt==2.13.0
+pyjwt==2.15.0
     # via
     #   -r services/api/requirements.txt
     #   mcp
@@ -209,7 +209,7 @@ typing-inspection==0.4.2
     #   mcp
     #   pydantic
     #   pydantic-settings
-urllib3==2.7.0
+urllib3==2.8.0
     # via requests
 uvicorn==0.51.0
     # via

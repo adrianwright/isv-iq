@@ -124,6 +124,17 @@ class ISVPortfolioV1(BaseModel):
     disclaimer: str
 
 
+class ReconciliationV1(BaseModel):
+    method: Literal["guided"] = "guided"
+    authority: dict[str, list[str]] = Field(default_factory=dict)
+    conflicts: list[str] = Field(default_factory=list)
+    sourcesUsed: list[str] = Field(default_factory=list)
+    sourcesUnavailable: list[str] = Field(default_factory=list)
+    overallStatus: SignalStatus
+    confidence: Confidence
+    narration: Literal["template", "model"] = "template"
+
+
 class ISVAskResultV1(BaseModel):
     schemaVersion: Literal["isv.v1"] = "isv.v1"
     question: str
@@ -139,6 +150,7 @@ class ISVAskResultV1(BaseModel):
     risks: list[BusinessRiskV1]
     opportunities: list[ExpansionOpportunityV1]
     specialists: list[SpecialistInsightV1] = Field(default_factory=list)
+    reconciliation: ReconciliationV1 | None = None
     evidence: list[Evidence]
     missingData: list[str]
     nextAction: NextAction

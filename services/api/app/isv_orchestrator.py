@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 import time
 from collections.abc import AsyncIterator
 from concurrent.futures import ThreadPoolExecutor
@@ -8,6 +9,15 @@ from typing import Any, Literal
 
 from app.config import Settings, get_settings
 from app.isv_runtime import find_isv_record, load_isv_registry, related, resolve_isv_context
+from app.isv_reconcile import (
+    authority_note,
+    build_reconciliation,
+    computed_confidence,
+    criticize,
+    narrate,
+    unavailable_sources,
+    verdict_word,
+)
 from app.isv_schemas import (
     AccountSnapshotV1,
     BusinessRiskV1,
@@ -135,7 +145,7 @@ class ISVOrchestrator:
             results,
             key=lambda item: [source.name for source in self.sources].index(item.source),
         )
-        final = self._assemble(context, ordered)
+        final = await asyncio.to_thread(self._assemble, context, ordered)
         yield "final", f'{{"result":{final.model_dump_json()}}}'
 
     def _assemble(
@@ -177,6 +187,7 @@ class ISVOrchestrator:
             expansion=expansion,
         )
         risks = _decision_business_risks(intent, context)
+        signals, conflicts = criticize(signals, _account_operating_facts(context))
         opportunities = [
             ExpansionOpportunityV1(
                 id=expansion["id"],
@@ -215,6 +226,30 @@ class ISVOrchestrator:
         if not answer_refs:
             raise RuntimeError("Grounded synthesis produced no valid evidence references.")
         evidence = [item for item in evidence if item.refId in answer_refs]
+        unavailable = unavailable_sources(results)
+        assessment = _decision_assessment(intent)
+        confidence = computed_confidence(assessment.confidence, conflicts, unavailable)
+        answer = re.sub(r"Confidence: \w+\.", f"Confidence: {confidence}.", answer, count=1)
+        narrated = narrate(
+            self.settings,
+            question=context.question,
+            draft=answer,
+            verdict_word=verdict_word(answer),
+            evidence=evidence,
+            conflicts=conflicts,
+            authority_note=authority_note(),
+        )
+        if narrated:
+            answer = narrated
+        reconciliation = build_reconciliation(
+            signals,
+            conflicts,
+            [result.source.value for result in results if result.citations],
+            unavailable,
+            assessment.confidence,
+            "model" if narrated else "template",
+        )
+        assessment = assessment.model_copy(update={"confidence": reconciliation.confidence})
         source_map = _decision_source_map(results, set(answer_refs))
         missing_data = _decision_missing_data(intent)
         reviewers = _decision_reviewers(
@@ -225,7 +260,6 @@ class ISVOrchestrator:
             executive_sponsor=executive_sponsor,
             expansion_architect=expansion_architect,
         )
-        assessment = _decision_assessment(intent)
 
         return ISVAskResultV1(
             question=context.question,
@@ -261,6 +295,9 @@ class ISVOrchestrator:
             risks=risks,
             opportunities=opportunities,
             specialists=specialists,
+            reconciliation=reconciliation,
+            unavailableSources=unavailable,
+            agentDriven=bool(narrated),
             evidence=evidence,
             missingData=missing_data,
             nextAction=next_action,

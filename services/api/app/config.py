@@ -44,6 +44,12 @@ class Settings(BaseSettings):
     USE_LIVE_ISV_FOUNDRY: bool = False
     USE_LIVE_ISV_WEB: bool = False
     USE_LIVE_ISV_WORK: bool = False
+    USE_LIVE_ISV_NARRATION: bool = False
+
+    ISV_OPENAI_ENDPOINT: str = ""
+    ISV_OPENAI_DEPLOYMENT: str = "gpt-5-5"
+    ISV_OPENAI_API_VERSION: str = "2025-04-01-preview"
+    ISV_NARRATION_TIMEOUT_SECONDS: float = 60.0
 
     ISV_FABRIC_WORKSPACE_ID: str = ""
     ISV_FABRIC_DATA_AGENT_ID: str = ""
@@ -126,6 +132,8 @@ class Settings(BaseSettings):
                 required.add("ISV_WEB_IQ_ENDPOINT")
             else:
                 required.update({"ISV_SEARCH_ENDPOINT", "ISV_WEB_KB_NAME"})
+        if self.USE_LIVE_ISV_NARRATION:
+            required.update({"ISV_OPENAI_ENDPOINT", "ISV_OPENAI_DEPLOYMENT"})
         if self.USE_LIVE_ISV_WORK:
             required.update({"WORK_IQ_CLIENT_ID", "WORK_IQ_ENDPOINT", "WORK_IQ_SCOPE"})
             if self.APP_ENVIRONMENT.strip().casefold() == "production":

@@ -180,6 +180,17 @@ export interface ISVPortfolio {
   disclaimer: string
 }
 
+export interface Reconciliation {
+  method: 'guided'
+  authority: Record<string, string[]>
+  conflicts: string[]
+  sourcesUsed: string[]
+  sourcesUnavailable: string[]
+  overallStatus: SignalStatus
+  confidence: Confidence
+  narration: 'template' | 'model'
+}
+
 export interface ISVAskResult {
   schemaVersion: 'isv.v1'
   question: string
@@ -195,6 +206,7 @@ export interface ISVAskResult {
   risks: BusinessRisk[]
   opportunities: ExpansionOpportunity[]
   specialists?: SpecialistInsight[]
+  reconciliation?: Reconciliation
   evidence: Evidence[]
   missingData: string[]
   nextAction: NextAction

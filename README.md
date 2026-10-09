@@ -57,6 +57,15 @@ React/Vite UI
 Local mode is deterministic and reads only `data/isv/`. Connected providers are independently
 gated and fail explicitly when required grounding is unavailable.
 
+### Guided reconciliation
+
+Sources are weighed by claim type using an authority map in `services/api/app/isv_reconcile.py`
+(numbers: Fabric IQ first; rules: Foundry IQ; commitments: Work IQ; external: Web IQ). A Critic
+applies the rules: records win on conflict, the worst status wins, and conflicts are logged.
+Confidence is computed from conflicts and unavailable sources. Optional model narration
+(`USE_LIVE_ISV_NARRATION`, `ISV_OPENAI_ENDPOINT`, `ISV_OPENAI_DEPLOYMENT`) rewrites the answer
+over the established facts and is rejected if it changes the verdict or cites unknown evidence.
+
 ## Run locally
 
 Prerequisites: Python 3.12+, Node.js 22+, npm, and PowerShell.
