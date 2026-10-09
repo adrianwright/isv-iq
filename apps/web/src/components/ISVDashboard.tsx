@@ -20,6 +20,8 @@ function signalClass(signal: BusinessSignal): string {
 
 function decisionLabel(intent: string): string {
   switch (intent) {
+    case 'churn_risk':
+      return 'Churn risk assessment'
     case 'proposal_readiness':
       return 'Proposal readiness'
     case 'expansion_gate':

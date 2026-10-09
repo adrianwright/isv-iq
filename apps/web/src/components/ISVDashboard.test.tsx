@@ -137,4 +137,12 @@ describe('ISVDashboard', () => {
     expect(markup).not.toContain('Expansion opportunity')
     expect(markup).not.toContain('AI Automation')
   })
+
+  it('labels the churn risk decision', () => {
+    const markup = renderToStaticMarkup(
+      <ISVDashboard result={{ ...result, intent: 'churn_risk', opportunities: [] }} trace={[]} />,
+    )
+
+    expect(markup).toContain('Churn risk assessment')
+  })
 })

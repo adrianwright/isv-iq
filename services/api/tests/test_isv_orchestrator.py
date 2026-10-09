@@ -42,6 +42,24 @@ def test_isv_orchestrator_returns_all_four_iqs_and_business_assessment() -> None
     assert result.mode == "mock"
 
 
+def test_churn_question_returns_churn_assessment() -> None:
+    result = ISVOrchestrator().answer(
+        ISVAskRequestV1(
+            question="Is Contoso at risk of churn?",
+            accountId="ACC-1001",
+            renewalId="REN-1001",
+        )
+    )
+
+    assert result.intent == "churn_risk"
+    assert result.assessment.status == "at_risk"
+    assert result.assessment.label == "Contoso is at risk of churn"
+    assert "Verdict: Yes — Contoso is at risk of churn" in result.answer
+    assert "P1 cases" in result.answer
+    assert "churn risk" in result.nextAction.text
+    assert set(result.answerRefs) <= {item.refId for item in result.evidence}
+
+
 def test_isv_prompt_intent_changes_the_narrative_and_action() -> None:
     result = ISVOrchestrator().answer(
         ISVAskRequestV1(

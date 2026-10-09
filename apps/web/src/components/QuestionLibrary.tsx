@@ -2,10 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   ChevronDown,
   CircleHelp,
-  Expand,
   LayoutGrid,
-  Target,
-  Workflow,
   type LucideIcon,
 } from 'lucide-react'
 import {
@@ -26,9 +23,6 @@ interface QuestionLibraryProps {
 const categoryIcon: Record<QuestionCategory, LucideIcon> = {
   All: LayoutGrid,
   Understand: CircleHelp,
-  Prepare: Workflow,
-  Expand: Expand,
-  Act: Target,
 }
 
 const MAX_LEN = 2000

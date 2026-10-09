@@ -330,6 +330,8 @@ class ISVOrchestrator:
 
 def _intent(question: str) -> str:
     normalized = question.casefold()
+    if "risk of churn" in normalized:
+        return "churn_risk"
     if "accelerate" in normalized and ("$300k" in normalized or "fabrikam" in normalized):
         return "expansion_acceleration"
     if "price-protected" in normalized or "october 13" in normalized:
@@ -574,7 +576,11 @@ def _decision_business_signals(
         BusinessSignalV1(
             id="SIG-FORECAST-COMMERCIAL",
             category="commercial",
-            title="Proposal readiness supports the current forecast",
+            title=(
+                "Commercial engagement supports retention"
+                if intent == "churn_risk"
+                else "Proposal readiness supports the current forecast"
+            ),
             status="positive",
             impact=(
                 f"All {len(completed)} of {len(commitments)} commitments are complete, "
@@ -582,12 +588,20 @@ def _decision_business_signals(
             ),
             evidenceRefs=["r2", "r4", "r6", "r7", "r8"],
             owner=owner["display_name"],
-            remediation="Track customer response before increasing forecast value.",
+            remediation=(
+                "Track the customer's response to the proposal."
+                if intent == "churn_risk"
+                else "Track customer response before increasing forecast value."
+            ),
         ),
         BusinessSignalV1(
             id="SIG-FORECAST-ADOPTION",
             category="adoption",
-            title="Adoption trajectory does not support full value",
+            title=(
+                "Declining adoption raises churn risk"
+                if intent == "churn_risk"
+                else "Adoption trajectory does not support full value"
+            ),
             status="negative",
             impact=(
                 f"Analytics adoption is {analytics['adoption_percent']}% with a "
@@ -595,7 +609,11 @@ def _decision_business_signals(
             ),
             evidenceRefs=["r5"],
             owner=success_manager["display_name"],
-            remediation="Require measured adoption improvement before restoring full value.",
+            remediation=(
+                "Measure adoption recovery with the customer."
+                if intent == "churn_risk"
+                else "Require measured adoption improvement before restoring full value."
+            ),
         ),
         BusinessSignalV1(
             id="SIG-FORECAST-SUPPORT",
@@ -613,7 +631,11 @@ def _decision_business_signals(
         BusinessSignalV1(
             id="SIG-FORECAST-EXECUTIVE",
             category="relationship",
-            title="Executive response remains the final forecast uncertainty",
+            title=(
+                "Executive response remains uncertain"
+                if intent == "churn_risk"
+                else "Executive response remains the final forecast uncertainty"
+            ),
             status="watch",
             impact=(
                 "The new CIO requested the proposal but has not accepted the full "
@@ -621,7 +643,11 @@ def _decision_business_signals(
             ),
             evidenceRefs=["r7", "r8", "r9"],
             owner=executive_sponsor["display_name"],
-            remediation="Obtain the CIO's response before changing forecast value.",
+            remediation=(
+                "Obtain the CIO's response and confirm renewal intentions."
+                if intent == "churn_risk"
+                else "Obtain the CIO's response before changing forecast value."
+            ),
         ),
     ]
 
@@ -630,6 +656,30 @@ def _decision_business_risks(
     intent: str,
     context: ISVQueryContext,
 ) -> list[BusinessRiskV1]:
+    if intent == "churn_risk":
+        return [
+            BusinessRiskV1(
+                id="RISK-CHURN-ADOPTION",
+                title="Adoption is declining",
+                severity="high",
+                impact="Falling Analytics usage may weaken renewal confidence.",
+                evidenceRefs=["r5", "r7"],
+            ),
+            BusinessRiskV1(
+                id="RISK-CHURN-SUPPORT",
+                title="Open incidents threaten customer trust",
+                severity="high",
+                impact="Open P1 cases require sustained resolution and customer acceptance.",
+                evidenceRefs=["r1", "r6", "r7"],
+            ),
+            BusinessRiskV1(
+                id="RISK-CHURN-EXECUTIVE",
+                title="CIO response is not recorded",
+                severity="medium",
+                impact="Proposal engagement does not yet confirm renewal intent.",
+                evidenceRefs=["r8", "r9", "r10"],
+            ),
+        ]
     if intent == "proposal_readiness":
         return [
             BusinessRiskV1(
@@ -716,6 +766,12 @@ def _decision_source_map(
 
 def _decision_missing_data(intent: str) -> list[str]:
     return {
+        "churn_risk": [
+            "Measured Analytics adoption improvement",
+            "Sustained closure evidence for the two open P1 cases",
+            "New CIO response to the three-year proposal",
+            "Customer confirmation of renewal intentions",
+        ],
         "renewal_forecast": [
             "Measured Analytics adoption improvement",
             "Sustained closure evidence for the two open P1 cases",
@@ -750,6 +806,12 @@ def _decision_missing_data(intent: str) -> list[str]:
 
 
 def _decision_assessment(intent: str) -> RenewalAssessmentV1:
+    if intent == "churn_risk":
+        return RenewalAssessmentV1(
+            status="at_risk",
+            label="Contoso is at risk of churn",
+            confidence="high",
+        )
     if intent == "proposal_readiness":
         return RenewalAssessmentV1(
             status="on_track",
@@ -783,6 +845,7 @@ def _decision_assessment(intent: str) -> RenewalAssessmentV1:
 
 def _decision_human_review_reason(intent: str) -> str:
     return {
+        "churn_risk": "Review churn risk and approve the customer recovery plan.",
         "renewal_forecast": (
             "Approve the forecast hold and the evidence triggers for restoring or reducing value."
         ),
@@ -850,6 +913,12 @@ def _decision_reviewers(
             _reviewer("Adoption recovery", success_manager, "pending"),
             _reviewer("Commercial closure", owner, "pending"),
         ]
+    if intent == "churn_risk":
+        return [
+            _reviewer("Account owner", owner, "assigned"),
+            _reviewer("Adoption recovery", success_manager, "pending"),
+            _reviewer("Executive renewal review", executive_sponsor, "pending"),
+        ]
     return [
         _reviewer("Forecast owner", owner, "assigned"),
         _reviewer("Adoption validation", success_manager, "pending"),
@@ -882,6 +951,23 @@ def _grounded_narrative(
             f"{commitment['text']}"
         )
     commitment_text = " ".join(commitment_details)
+
+    if intent == "churn_risk":
+        return (
+            "Verdict: Yes — Contoso is at risk of churn. Confidence: high. "
+            f"Evidence of risk — Analytics adoption is {analytics['adoption_percent']}% after a "
+            f"{abs(float(analytics['trend_percent'])):g}% decline, {len(open_p1)} P1 cases "
+            "remain open, and the new CIO is reviewing vendors [r5][r6][r7][r9]. "
+            "Countervailing evidence — payment is current, the district requested a "
+            "three-year proposal, and public AI investment supports continued engagement "
+            "[r4][r7][r8][r10]. Contract service commitments and the recovery package "
+            "frame the response [r1][r2]. Missing evidence — sustained case closure, "
+            "measured adoption improvement, and the CIO's response to the proposal. "
+            "Next action — confirm customer sentiment and review a recovery plan with the account team.",
+            "Contoso is at risk of churn; resolve support issues and confirm renewal intent.",
+            "Churn risk assessment with evidence, uncertainty, and recovery actions.",
+            ["r1", "r2", "r4", "r5", "r6", "r7", "r8", "r9", "r10"],
+        )
 
     if intent == "proposal_readiness":
         return (
@@ -1004,7 +1090,14 @@ def _next_action(
     support_manager: dict[str, Any],
     success_manager: dict[str, Any],
 ) -> NextAction:
-    if intent == "proposal_readiness":
+    if intent == "churn_risk":
+        text = "Review Contoso's churn risk and confirm the customer recovery plan."
+        steps = [
+            f"{support_manager['display_name']}: confirm case resolution and customer acceptance.",
+            f"{success_manager['display_name']}: measure adoption recovery.",
+            f"{owner['display_name']}: obtain the CIO's response and confirm renewal intentions.",
+        ]
+    elif intent == "proposal_readiness":
         text = "Send the approved proposal on October 13 with its recovery evidence."
         steps = [
             "Release the approved three-year price-protected proposal.",
@@ -1054,6 +1147,13 @@ def _trace(
     specialists: list[SpecialistInsightV1],
 ) -> list[TraceStep]:
     steps_by_intent = {
+        "churn_risk": [
+            ("Assessed adoption and support", "Checked usage trends, P1 cases, and SLA evidence."),
+            ("Reviewed commitments", "Checked contract terms, approvals, and recovery actions."),
+            ("Reconciled customer sentiment", "Compared account-team context with public leadership signals."),
+            ("Identified missing evidence", "Flagged case closure, adoption recovery, and CIO response."),
+            ("Validated churn assessment", "Checked citations, uncertainty, owner, and human review."),
+        ],
         "renewal_forecast": [
             ("Quantified renewal exposure", "Compared current ARR, forecast ARR, and contraction exposure."),
             ("Tested operational downside", "Applied adoption, support, SLA, and payment evidence."),
