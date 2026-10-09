@@ -123,6 +123,7 @@
   <div class="sheet">
     <b>ISV IQ &nbsp;/&nbsp; Briefing No. 1</b>
     <nav aria-label="Sections">
+      <a href="#use-cases">Use cases</a>
       <a href="#coalescing">Reconciliation</a>
       <a href="#finding">The finding</a>
       <a href="#method">Method</a>
@@ -135,7 +136,7 @@
   <div class="opening">
     <div>
       <h1>One churn question, answered from <em>sources</em> nobody keeps together.</h1>
-      <p class="lede">An account team has to decide whether Contoso is at risk of churn. The evidence sits in enterprise systems, policy and contracts, communications and public signals. This demo reads across all of them, shows its sources, and stops at a draft for a person to review.</p>
+      <p class="lede">An account team has to decide whether Contoso is at risk of churn. The evidence sits in enterprise systems, policy and contracts, communications and public signals. This demo brings those sources together, shows its evidence, and stops at a draft for a person to review.</p>
     </div>
   </div>
 
@@ -146,13 +147,23 @@
     </figure>
   </section>
 
+  <section id="use-cases" style="margin-bottom:56px">
+    <p class="kicker">Two ways to use it</p>
+    <h2>Across a portfolio or in a conversation.</h2>
+    <p class="intro">The same evidence-led assessment can support a scheduled batch that processes account records into reports for review, or an interactive question from a person working with an agent. Either way, the result is grounded in sources and stays subject to human review.</p>
+    <figure class="figure">
+      <img src="https://github.com/user-attachments/assets/75f701b4-10f6-46c4-96cb-8e307287fec5" width="1536" height="1024" loading="lazy" alt="Two use cases: scheduled batch processing turns account data and documents into reports; a person can also ask an agent questions and review the answer interactively">
+      <figcaption>Batch processing prepares reports; interactive questions let people investigate and refine an assessment with an agent.</figcaption>
+    </figure>
+  </section>
+
   <section id="coalescing" style="margin-bottom:56px">
     <p class="kicker">Guided reconciliation</p>
-    <h2>The system decides, grounded in your rules.</h2>
-    <p class="intro">Evidence from every source lands in one place, and the system settles the answer. It does not leave that to whoever read the last email. Each source is trusted for what it knows best: enterprise systems for usage, spend and support; policy and contracts for terms and approvals; communications for customer sentiment and promises; public signals for outside changes. Claims are weighed by kind, never averaged.</p>
+    <h2>The evidence is reconciled by rules, then reviewed by a person.</h2>
+    <p class="intro">Evidence from every source lands in one place, and the system settles the assessment. It does not leave that to whoever read the last email. Each source is trusted for what it knows best: enterprise systems for usage, spend and support; policy and contracts for terms and approvals; communications for customer sentiment and promises; public signals for outside changes. Evidence is weighed by category, never averaged.</p>
     <table>
-      <caption>Who is trusted first, by kind of claim</caption>
-      <thead><tr><th>Claim</th><th>Trusted first</th><th>Then</th></tr></thead>
+      <caption>Who is trusted first, by evidence category</caption>
+      <thead><tr><th>Evidence category</th><th>Trusted first</th><th>Then</th></tr></thead>
       <tbody>
         <tr><th>Enterprise Systems<small>usage and adoption, spend and billing, support health</small></th><td data-l="Trusted first">Fabric IQ</td><td data-l="Then">Work IQ, Web IQ, Foundry IQ</td></tr>
         <tr><th>Policy, Contracts and Governance<small>terms, approvals, service commitments</small></th><td data-l="Trusted first">Foundry IQ</td><td data-l="Then">Fabric IQ, Work IQ, Web IQ</td></tr>
@@ -200,6 +211,7 @@
   <section id="method">
     <p class="kicker">Method</p>
     <h2>Parallel retrieval, stated uncertainty, a person at the end.</h2>
+    <p class="intro">Whether accounts are assessed in a batch or someone asks a question interactively, each assessment follows the same steps.</p>
     <ol class="steps">
       <li><div><b>Interpret the question</b><span>Resolve the account, the renewal, the churn risk and what is missing.</span></div></li>
       <li><div><b>Retrieve in parallel</b><span>Ask every connected source at the same time, and time each one.</span></div></li>
