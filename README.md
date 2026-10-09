@@ -4,7 +4,8 @@
 
 Microsoft IQ for ISVs demonstrates how software companies can combine four Microsoft IQ layers to
 understand customer renewals, recover at-risk accounts, and identify responsible expansion motions.
-The flagship scenario is **Customer Renewal and Expansion Intelligence** for the synthetic`nContoso Unified School District account, with Fabrikam Unified School District as a positive expansion
+The flagship scenario is **Customer Renewal and Expansion Intelligence** for the synthetic
+Contoso Unified School District account, with Fabrikam Unified School District as a positive expansion
 contrast in a five-school-district renewal portfolio.
 
 ![Why this matters: one renewal question, four places the answer lives](docs/images/isv-why-it-matters.png)
