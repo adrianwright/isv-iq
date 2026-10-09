@@ -6,15 +6,15 @@ import { ISVDashboard } from './ISVDashboard'
 
 const result: ISVAskResult = {
   schemaVersion: 'isv.v1',
-  question: 'Give me an executive renewal brief for Alder Creek Unified School District.',
-  answer: 'Alder Creek Unified School District is at risk but recoverable.',
+  question: 'Give me an executive renewal brief for Contoso Unified School District.',
+  answer: 'Contoso Unified School District is at risk but recoverable.',
   answerRefs: ['r1'],
   intent: 'renewal_assessment',
   scope: 'Renewal risk and next actions.',
   bottomLine: 'Restore support confidence before positioning expansion.',
   account: {
     id: 'ACC-1001',
-    name: 'Alder Creek Unified School District',
+    name: 'Contoso Unified School District',
     industry: 'Education',
     segment: 'Strategic',
     region: 'North America',
@@ -115,7 +115,7 @@ describe('ISVDashboard', () => {
   it('renders renewal risk, expansion, evidence, and human action', () => {
     const markup = renderToStaticMarkup(<ISVDashboard result={result} trace={[]} />)
 
-    expect(markup).toContain('Alder Creek Unified School District')
+    expect(markup).toContain('Contoso Unified School District')
     expect(markup).toContain('$2,400,000')
     expect(markup).toContain('Support confidence is impaired')
     expect(markup).toContain('AI Automation')

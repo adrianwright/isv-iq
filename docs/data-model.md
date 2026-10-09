@@ -11,6 +11,6 @@ external signals.
 relationship model.
 
 The portfolio contract is intentionally separate. `data/isv/portfolio.yaml` contains summary-level
-triage records for five accounts, while Alder Creek Unified School District is the complete hero
+triage records for five accounts, while Contoso Unified School District is the complete hero
 account and Fabrikam Unified School District provides a complete positive expansion contrast.
 All five portfolio accounts are school districts in the Education industry.

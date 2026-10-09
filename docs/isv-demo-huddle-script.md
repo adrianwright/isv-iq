@@ -1,4 +1,4 @@
-# Alder Creek forecast huddle: demo script
+# Contoso forecast huddle: demo script
 
 Synthetic demo only. Seeded by `agent/provisioning/isv/seed_isv_m365_workiq.py`.
 
@@ -31,6 +31,6 @@ Transcripts only exist after a real meeting runs, so the meeting must be held ma
 python agent/provisioning/isv/seed_isv_m365_workiq.py --tenant-id <tenant> --client-id <client>
 ```
 
-Add `--huddle-members a@contoso.com,b@contoso.com` to also post the thread to a group chat titled "Alder Creek USD - Renewal forecast huddle". Without the flag nobody else is messaged.
+Add `--huddle-members a@contoso.com,b@contoso.com` to also post the thread to a group chat titled "Contoso USD - Renewal forecast huddle". Without the flag nobody else is messaged.
 
 The run is idempotent: the thread is skipped if its tag exists in the target chat, and an existing meeting has its description updated and its Teams meeting re-asserted (the join link may be regenerated).

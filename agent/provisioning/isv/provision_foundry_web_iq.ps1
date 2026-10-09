@@ -221,7 +221,7 @@ foreach ($test in @(
   },
   @{
     Name = $WebKnowledgeBaseName
-    Question = "What current public leadership, AI investment, and competitive signals are relevant to Alder Creek Unified School District?"
+    Question = "What current public leadership, AI investment, and competitive signals are relevant to Contoso Unified School District?"
   }
 )) {
   $body = @{

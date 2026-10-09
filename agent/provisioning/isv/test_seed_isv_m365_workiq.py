@@ -15,7 +15,7 @@ from seed_isv_m365_workiq import (
 )
 
 
-def test_huddle_thread_and_meeting_are_alder_creek_only() -> None:
+def test_huddle_thread_and_meeting_are_contoso_only() -> None:
     alder = SeedContext(user_address="demo@example.invalid")
     fabrikam = SeedContext(
         user_address="demo@example.invalid",

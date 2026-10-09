@@ -16,7 +16,7 @@ from app.main import app
 def test_isv_orchestrator_returns_all_four_iqs_and_business_assessment() -> None:
     result = ISVOrchestrator().answer(
         ISVAskRequestV1(
-            question="Give me an executive renewal brief for Alder Creek Unified School District.",
+            question="Give me an executive renewal brief for Contoso Unified School District.",
             accountId="ACC-1001",
             renewalId="REN-1001",
         )
@@ -151,7 +151,7 @@ def test_isv_live_fabric_uses_isolated_data_agent(
     async def fake_call(url: str, scope: str, question: str) -> str:
         captured.update(url=url, scope=scope, question=question)
         return (
-            "Alder Creek Unified School District has USD 2,400,000 ARR. Renewal REN-1001 is due "
+            "Contoso Unified School District has USD 2,400,000 ARR. Renewal REN-1001 is due "
             "2026-12-20 with 75 days remaining. Analytics adoption is 53%."
         )
 

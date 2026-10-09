@@ -23,7 +23,7 @@ export const questionLibrary: QuestionExample[] = [
     accountId: 'ACC-1001',
     renewalId: 'REN-1001',
     prompt:
-      'Should we increase the Alder Creek Unified School District renewal forecast from $2.2M to the full $2.4M ARR? Return a Yes, No, or Not yet verdict with confidence, criteria met, criteria not met, contradictory evidence, missing evidence, and the next forecast action.',
+      'Should we increase the Contoso Unified School District renewal forecast from $2.2M to the full $2.4M ARR? Return a Yes, No, or Not yet verdict with confidence, criteria met, criteria not met, contradictory evidence, missing evidence, and the next forecast action.',
   },
   {
     category: 'Prepare',
@@ -31,7 +31,7 @@ export const questionLibrary: QuestionExample[] = [
     accountId: 'ACC-1001',
     renewalId: 'REN-1001',
     prompt:
-      'Are we ready to send Alder Creek Unified School District the three-year price-protected renewal proposal by October 13? Return a Yes, No, or Not yet verdict based on pricing approval, payment status, support recovery, customer requirements, and open commitments; identify every remaining condition and its owner.',
+      'Are we ready to send Contoso Unified School District the three-year price-protected renewal proposal by October 13? Return a Yes, No, or Not yet verdict based on pricing approval, payment status, support recovery, customer requirements, and open commitments; identify every remaining condition and its owner.',
   },
   {
     category: 'Expand',
@@ -39,7 +39,7 @@ export const questionLibrary: QuestionExample[] = [
     accountId: 'ACC-1001',
     renewalId: 'REN-1001',
     prompt:
-      'Should we advance the $450K Alder Creek Unified School District AI Automation opportunity to a funded architecture workshop now? Return a Yes, No, or Not yet verdict based on district demand, sponsor strength, product fit, technical prerequisites, architect capacity, support trust, and measurable expansion value.',
+      'Should we advance the $450K Contoso Unified School District AI Automation opportunity to a funded architecture workshop now? Return a Yes, No, or Not yet verdict based on district demand, sponsor strength, product fit, technical prerequisites, architect capacity, support trust, and measurable expansion value.',
   },
   {
     category: 'Act',

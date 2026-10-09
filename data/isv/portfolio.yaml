@@ -6,7 +6,7 @@ meta:
 
 accounts:
   - id: ACC-1001
-    name: Alder Creek Unified School District
+    name: Contoso Unified School District
     industry: Education
     segment: Strategic
     region: North America

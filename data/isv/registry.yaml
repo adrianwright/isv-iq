@@ -8,7 +8,7 @@ meta:
 
 accounts:
   - id: ACC-1001
-    name: Alder Creek Unified School District
+    name: Contoso Unified School District
     industry: Education
     segment: Strategic
     region: North America
@@ -512,16 +512,16 @@ external_signals:
     account_id: ACC-1001
     occurred_at: "2026-09-18"
     category: leadership_change
-    title: Alder Creek Unified School District appoints Maya Chen as CIO
+    title: Contoso Unified School District appoints Maya Chen as CIO
     impact: The new district technology executive is reviewing strategic platform value.
-    source_url: "https://alder-creek-usd.example.invalid/news/new-cio"
+    source_url: "https://contoso-usd.example.invalid/news/new-cio"
   - id: EXT-1002
     account_id: ACC-1001
     occurred_at: "2026-09-26"
     category: strategic_investment
-    title: Alder Creek Unified School District announces responsible AI initiative
+    title: Contoso Unified School District announces responsible AI initiative
     impact: The district strategy supports administrative workflow automation and staff productivity.
-    source_url: "https://alder-creek-usd.example.invalid/news/responsible-ai"
+    source_url: "https://contoso-usd.example.invalid/news/responsible-ai"
   - id: EXT-1003
     account_id: ACC-1001
     occurred_at: "2026-10-01"

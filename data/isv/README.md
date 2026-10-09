@@ -7,7 +7,7 @@ signals are fictional. **Synthetic demo data only. Not a production forecast or 
 
 ## Hero scenario
 
-Alder Creek Unified School District is a strategic education customer with a USD 2.4M renewal due
+Contoso Unified School District is a strategic education customer with a USD 2.4M renewal due
 in 75 days. The account has declining Analytics adoption, two unresolved P1 cases, one SLA breach,
 a new CIO, a proposal ready for controlled release, and a possible AI Automation expansion.
 

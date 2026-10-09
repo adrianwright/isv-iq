@@ -117,7 +117,7 @@ def test_anonymous_mock_routes_succeed_but_public_routes_remain_public() -> None
         assert (
             client.get(
                 "/api/evidence/doc",
-                params={"path": "isv_foundry_docs/alder_creek_contract.md"},
+                params={"path": "isv_foundry_docs/contoso_contract.md"},
             ).status_code
             == 200
         )

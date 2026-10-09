@@ -24,7 +24,7 @@ SUBJECT_VERSION = "v1"
 MARKER = f"[Microsoft IQ for ISVs Demo {SUBJECT_VERSION}]"
 MAIL_SUBJECT = (
     f"{MARKER} ACC-1001 / REN-1001 "
-    "Alder Creek Unified School District decision evidence"
+    "Contoso Unified School District decision evidence"
 )
 TODO_LIST_NAME = "Microsoft IQ for ISVs Demo"
 SELF_CHAT_ID = "48:notes"
@@ -57,7 +57,7 @@ GRAPH_OBO_SCOPES = tuple(
 class SeedContext:
     user_address: str
     account_id: str = "ACC-1001"
-    account_name: str = "Alder Creek Unified School District"
+    account_name: str = "Contoso Unified School District"
     renewal_id: str = "REN-1001"
     proposal_due: str = "2026-10-13"
     recovery_due: str = "2026-10-08"
@@ -318,7 +318,7 @@ def huddle_event_subject(ctx: SeedContext) -> str:
 
 
 def build_huddle_thread_message(ctx: SeedContext) -> dict[str, Any] | None:
-    """Teams-conversation evidence for the Alder Creek forecast huddle (self-chat only)."""
+    """Teams-conversation evidence for the Contoso forecast huddle (self-chat only)."""
     if ctx.account_id != HUDDLE_ACCOUNT_ID:
         return None
     lines = (
@@ -348,7 +348,7 @@ def build_huddle_thread_message(ctx: SeedContext) -> dict[str, Any] | None:
 
 
 def huddle_chat_topic(ctx: SeedContext) -> str:
-    return "Alder Creek USD - Renewal forecast huddle"
+    return "Contoso USD - Renewal forecast huddle"
 
 
 def build_huddle_event(ctx: SeedContext) -> dict[str, Any] | None:

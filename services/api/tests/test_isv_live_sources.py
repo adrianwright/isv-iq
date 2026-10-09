@@ -164,7 +164,7 @@ def test_mock_work_reads_isv_workplace_corpus() -> None:
     assert result.facts["open_commitment_count"] == 0
     response = TestClient(app).get(result.citations[0].url)
     assert response.status_code == 200
-    assert "Alder Creek Unified School District Renewal QBR Summary" in response.text
+    assert "Contoso Unified School District Renewal QBR Summary" in response.text
 
 
 def test_live_work_requires_customer_and_internal_attributions(monkeypatch) -> None:
@@ -183,7 +183,7 @@ def test_live_work_requires_customer_and_internal_attributions(monkeypatch) -> N
                 duration_ms=25,
                 attributions=(
                     WorkIQAttribution(
-                        title="Alder Creek Unified School District Renewal QBR",
+                        title="Contoso Unified School District Renewal QBR",
                         url="https://example.test/qbr",
                     ),
                     WorkIQAttribution(

@@ -375,7 +375,7 @@ class ISVMockWorkIQ:
             commitments_name = "fabrikam_commitments.json"
             followup_metadata, followup = ({}, "")
         else:
-            qbr_name = "alder_creek_qbr.md"
+            qbr_name = "contoso_qbr.md"
             plan_name = "internal_account_plan.md"
             commitments_name = "commitments.json"
             followup_metadata, followup = _read_isv_work_document(

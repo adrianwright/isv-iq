@@ -22,7 +22,7 @@ from tools.validate_isv_consistency import validate
 
 def test_isv_request_contract_is_additive_and_version_ready() -> None:
     request = ISVAskRequestV1(
-        question="Give me an executive renewal brief for Alder Creek Unified School District.",
+        question="Give me an executive renewal brief for Contoso Unified School District.",
         accountId="ACC-1001",
         renewalId="REN-1001",
     )

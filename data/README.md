@@ -6,7 +6,7 @@ content.
 
 ## Contents
 
-- `registry.yaml`: canonical detailed Alder Creek Unified School District and Fabrikam scenarios.
+- `registry.yaml`: canonical detailed Contoso Unified School District and Fabrikam scenarios.
 - `ontology.yaml`: Fabric entity and relationship contract.
 - `fabric/`: 15 deterministic Lakehouse-ready CSV tables and manifest.
 - `foundry_docs/`: synthetic contract, policy, product, pricing, and recovery guidance.

@@ -353,7 +353,7 @@ def validate() -> list[str]:
     if len(prompts) != 4:
         problems.append("prompt catalog must include exactly four demo prompts")
     named_prompts = [
-        prompt for prompt in prompts if "Alder Creek" in str(prompt.get("text", ""))
+        prompt for prompt in prompts if "Contoso" in str(prompt.get("text", ""))
     ]
     if len(named_prompts) < 3:
         problems.append(
