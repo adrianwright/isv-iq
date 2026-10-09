@@ -1,0 +1,5 @@
+id,account_id,product,priority,status,opened_at,sla_breached,sentiment,owner_id,summary
+CASE-1001,ACC-1001,Analytics,P1,engineering_investigation,2026-09-12,true,frustrated,EMP-1005,Intermittent analytics refresh failures affect executive dashboards.
+CASE-1002,ACC-1001,Core Platform,P1,mitigation_provided,2026-09-24,false,concerned,EMP-1005,Identity synchronization delays affect new employee onboarding.
+CASE-1003,ACC-1001,Analytics,P2,resolved,2026-08-05,false,neutral,EMP-1005,Export formatting issue resolved in the September service update.
+CASE-2001,ACC-1002,Core Platform,P2,resolved,2026-08-18,false,positive,EMP-2005,School identity synchronization issue was resolved within SLA.

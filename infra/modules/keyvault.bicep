@@ -23,7 +23,6 @@ resource vault 'Microsoft.KeyVault/vaults@2023-07-01' = {
     enabledForDiskEncryption: false
     enabledForTemplateDeployment: true
     publicNetworkAccess: 'Enabled'
-    softDeleteRetentionInDays: 7
   }
 }
 

@@ -1,0 +1,5 @@
+id,account_id,subscription_id,period,active_users,licensed_users,adoption_percent,trend_percent
+USE-1001,ACC-1001,SUB-1001,2026-09,9870,12000,82.3,-1.2
+USE-1002,ACC-1001,SUB-1002,2026-09,2385,4500,53.0,-14.0
+USE-2001,ACC-1002,SUB-2001,2026-09,6840,7600,90.0,6.0
+USE-2002,ACC-1002,SUB-2002,2026-09,2464,2800,88.0,12.0

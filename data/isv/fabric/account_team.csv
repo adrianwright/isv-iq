@@ -1,0 +1,11 @@
+id,account_id,employee_id,role,allocation_percent
+TEAM-1001,ACC-1001,EMP-1001,account_executive,50
+TEAM-1002,ACC-1001,EMP-1002,customer_success_manager,40
+TEAM-1003,ACC-1001,EMP-1003,solution_architect,10
+TEAM-1004,ACC-1001,EMP-1004,executive_sponsor,5
+TEAM-1005,ACC-1001,EMP-1005,support_escalation_manager,15
+TEAM-2001,ACC-1002,EMP-2001,account_executive,45
+TEAM-2002,ACC-1002,EMP-2002,customer_success_manager,35
+TEAM-2003,ACC-1002,EMP-2003,solution_architect,25
+TEAM-2004,ACC-1002,EMP-2004,executive_sponsor,10
+TEAM-2005,ACC-1002,EMP-2005,support_escalation_manager,10

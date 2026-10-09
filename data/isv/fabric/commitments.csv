@@ -1,0 +1,6 @@
+id,account_id,renewal_id,owner_id,source,due_date,status,text
+COM-1001,ACC-1001,REN-1001,EMP-1001,qbr_meeting,2026-10-13,completed,Deliver a three-year renewal proposal with price protection.
+COM-1002,ACC-1001,REN-1001,EMP-1003,customer_email,2026-10-10,completed,Confirm the committed roadmap date for analytics resiliency improvements.
+COM-1003,ACC-1001,REN-1001,EMP-1005,escalation_call,2026-10-08,completed,Provide an incident recovery summary and service-credit recommendation.
+COM-2001,ACC-1002,REN-1002,EMP-2001,executive_meeting,2026-10-12,completed,Confirm commercial sponsorship for the automation expansion.
+COM-2002,ACC-1002,REN-1002,EMP-2003,architecture_review,2026-10-15,completed,"Validate security, integration, capacity, and measurable value criteria."

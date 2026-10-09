@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Launch the AMC IQ proof-of-concept locally (FastAPI backend + React UI) in deterministic mock mode.
+  Launch Microsoft IQ for ISVs locally (FastAPI backend + React UI) in deterministic mock mode.
 .DESCRIPTION
   Starts the backend on http://localhost:8000 and the Vite dev server on http://localhost:5173.
   No cloud or auth required, everything runs against the synthetic data/ package.
@@ -18,13 +18,10 @@ $venvPy = Join-Path $root ".venv\Scripts\python.exe"
 
 $safeEnvironment = [ordered]@{
     APP_ENVIRONMENT = "development"
-    USE_LIVE_FOUNDRY = "false"
-    USE_LIVE_FABRIC = "false"
-    USE_LIVE_WORK = "false"
-    USE_LIVE_WEB = "false"
-    USE_LIVE_AGENT = "false"
-    USE_MULTI_AGENT = "false"
-    USE_LIVE_SPECIALISTS = "false"
+    USE_LIVE_ISV_FABRIC = "false"
+    USE_LIVE_ISV_FOUNDRY = "false"
+    USE_LIVE_ISV_WEB = "false"
+    USE_LIVE_ISV_WORK = "false"
     CORS_ORIGINS = "http://localhost:$WebPort"
     DATA_DIR = (Join-Path $root "data")
     VITE_API_BASE_URL = "http://localhost:$ApiPort"

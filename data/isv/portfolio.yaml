@@ -1,0 +1,92 @@
+meta:
+  schema_version: isv.portfolio.v1
+  as_of: "2026-10-06"
+  hero_account_id: ACC-1001
+  disclaimer: "Synthetic demo data only. Not a production forecast or system of record."
+
+accounts:
+  - id: ACC-1001
+    name: Alder Creek Unified School District
+    industry: Education
+    segment: Strategic
+    region: North America
+    renewal_id: REN-1001
+    renewal_date: "2026-12-20"
+    days_to_renewal: 75
+    current_arr: 2400000
+    forecast_arr: 2200000
+    currency: USD
+    status: at_risk
+    confidence: high
+    expansion_arr: 450000
+    priority: 1
+    primary_driver: Support recovery and declining Analytics adoption
+    recommended_motion: Executive recovery plan
+  - id: ACC-1002
+    name: Fabrikam Unified School District
+    industry: Education
+    segment: Enterprise
+    region: North America
+    renewal_id: REN-1002
+    renewal_date: "2027-02-03"
+    days_to_renewal: 120
+    current_arr: 1800000
+    forecast_arr: 1875000
+    currency: USD
+    status: on_track
+    confidence: high
+    expansion_arr: 300000
+    priority: 4
+    primary_driver: Strong adoption and executive sponsorship
+    recommended_motion: Expand automation footprint
+  - id: ACC-1003
+    name: Northwind Unified School District
+    industry: Education
+    segment: Enterprise
+    region: Europe
+    renewal_id: REN-1003
+    renewal_date: "2026-11-05"
+    days_to_renewal: 30
+    current_arr: 1200000
+    forecast_arr: 850000
+    currency: USD
+    status: critical
+    confidence: high
+    expansion_arr: 0
+    priority: 0
+    primary_driver: Executive sponsor loss and unresolved commercial dispute
+    recommended_motion: Retention escalation
+  - id: ACC-1004
+    name: Adventure Works Unified School District
+    industry: Education
+    segment: Enterprise
+    region: North America
+    renewal_id: REN-1004
+    renewal_date: "2026-12-05"
+    days_to_renewal: 60
+    current_arr: 900000
+    forecast_arr: 900000
+    currency: USD
+    status: at_risk
+    confidence: medium
+    expansion_arr: 150000
+    priority: 2
+    primary_driver: Security review and incomplete adoption evidence
+    recommended_motion: Close validation gaps
+  - id: ACC-1005
+    name: Tailspin Unified School District
+    industry: Education
+    segment: Strategic
+    region: Asia Pacific
+    renewal_id: REN-1005
+    renewal_date: "2027-04-04"
+    days_to_renewal: 180
+    current_arr: 3100000
+    forecast_arr: 3400000
+    currency: USD
+    status: on_track
+    confidence: medium
+    expansion_arr: 600000
+    priority: 3
+    primary_driver: District-wide rollout and new data-platform program
+    recommended_motion: Build executive expansion plan

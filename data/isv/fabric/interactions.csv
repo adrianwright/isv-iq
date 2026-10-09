@@ -1,0 +1,6 @@
+id,account_id,occurred_at,type,participants,sentiment,summary
+INT-1001,ACC-1001,2026-09-29,qbr_meeting,"[""CON-1001"",""CON-1002"",""EMP-1001"",""EMP-1002""]",mixed,District leaders requested a three-year proposal; the approval package is complete while support reliability remains a forecast concern.
+INT-1002,ACC-1001,2026-10-02,customer_email,"[""CON-1003"",""EMP-1002"",""EMP-1005""]",negative,"The district accepted the incident recovery package and committed Analytics roadmap date, but requested continued operational reporting."
+INT-1003,ACC-1001,2026-10-05,internal_teams,"[""EMP-1001"",""EMP-1002"",""EMP-1003"",""EMP-1005""]",concerned,Team approved the proposal for release while keeping the full-value forecast gated on adoption recovery and executive response.
+INT-2001,ACC-1002,2026-09-28,executive_meeting,"[""CON-2001"",""CON-2002"",""EMP-2001"",""EMP-2004""]",positive,Fabrikam approved the automation business case and requested an accelerated rollout plan.
+INT-2002,ACC-1002,2026-10-03,architecture_review,"[""CON-2003"",""EMP-2002"",""EMP-2003""]",positive,"Architecture, security, integration, and value criteria passed with capacity reserved."

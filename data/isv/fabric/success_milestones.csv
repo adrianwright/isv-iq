@@ -1,0 +1,5 @@
+id,account_id,name,owner_id,due_date,status,blocker
+MIL-1001,ACC-1001,Analytics executive dashboard rollout,EMP-1002,2026-09-15,blocked,CASE-1001
+MIL-1002,ACC-1001,AI Automation value workshop,EMP-1003,2026-10-18,not_started,specialist_capacity
+MIL-2001,ACC-1002,School operations analytics rollout,EMP-2002,2026-09-25,completed,none
+MIL-2002,ACC-1002,AI Automation architecture validation,EMP-2003,2026-10-15,completed,none

@@ -91,30 +91,33 @@ def test_anonymous_mock_routes_succeed_but_public_routes_remain_public() -> None
         client = TestClient(app)
         assert (
             client.post(
-                "/api/ask",
-                json={"question": "Is PT-1042 eligible for NCT99004324?"},
+                "/api/isv/ask",
+                json={
+                    "question": "Assess the renewal.",
+                    "accountId": "ACC-1001",
+                    "renewalId": "REN-1001",
+                },
             ).status_code
             == 200
         )
         assert (
             client.post(
-                "/api/ask/stream",
-                json={"question": "Is PT-1042 eligible for NCT99004324?"},
+                "/api/isv/ask/stream",
+                json={
+                    "question": "Assess the renewal.",
+                    "accountId": "ACC-1001",
+                    "renewalId": "REN-1001",
+                },
             ).status_code
             == 200
         )
-        assert (
-            client.get(
-                "/api/cohort/patients/PT-1042/trials/NCT99004324/eligibility"
-            ).status_code
-            == 200
-        )
+        assert client.get("/api/isv/portfolio").status_code == 200
         assert client.get("/healthz").status_code == 200
         assert client.get("/api/fabric/status").status_code == 200
         assert (
             client.get(
                 "/api/evidence/doc",
-                params={"path": "foundry_docs/protocol_NCT99004324.md"},
+                params={"path": "isv_foundry_docs/alder_creek_contract.md"},
             ).status_code
             == 200
         )
@@ -127,21 +130,15 @@ def _configure_non_mock_environment(
 ) -> None:
     values = {
         "APP_ENVIRONMENT": "production" if production else "development",
-        "USE_LIVE_FOUNDRY": str(live_foundry).lower(),
-        "USE_LIVE_FABRIC": "false",
-        "USE_LIVE_WORK": "false",
-        "USE_LIVE_WEB": "false",
-        "USE_LIVE_AGENT": "false",
-        "USE_LIVE_SPECIALISTS": "false",
+        "USE_LIVE_ISV_FOUNDRY": str(live_foundry).lower(),
+        "USE_LIVE_ISV_FABRIC": "false",
+        "USE_LIVE_ISV_WORK": "false",
+        "USE_LIVE_ISV_WEB": "false",
         "AZURE_TENANT_ID": TENANT_ID,
         "API_AUDIENCE": AUDIENCE,
         "API_REQUIRED_SCOPE": "access_as_user",
-        "FABRIC_WORKSPACE_ID": "11111111-2222-3333-4444-555555555555",
-        "FABRIC_DATA_AGENT_ID": "22222222-3333-4444-5555-666666666666",
-        "PROJECT_ENDPOINT": "https://operator-foundry.example.com/api/projects/poc",
-        "ELIGIBILITY_EVALUATOR_AGENT": "eligibility-evaluator",
-        "SEARCH_ENDPOINT": "https://operator-search.example.com",
-        "FOUNDRY_KB_NAME": "operator-kb",
+        "ISV_SEARCH_ENDPOINT": "https://operator-search.example.com",
+        "ISV_FOUNDRY_KB_NAME": "operator-kb",
     }
     for name, value in values.items():
         monkeypatch.setenv(name, value)
@@ -170,8 +167,8 @@ def test_production_or_live_configuration_requires_bearer_authentication(
         )
         client = TestClient(app)
         response = client.post(
-            "/api/ask",
-            json={"question": "Is PT-1042 eligible for NCT99004324?"},
+            "/api/isv/ask",
+            json={"question": "Assess renewal."},
         )
         assert response.status_code == 401
         assert response.headers["www-authenticate"] == "Bearer"
@@ -186,9 +183,9 @@ def test_mock_mode_rejects_a_non_bearer_authorization_header() -> None:
     try:
         client = TestClient(app)
         response = client.post(
-            "/api/ask",
+            "/api/isv/ask",
             headers={"Authorization": "Basic not-a-bearer-token"},
-            json={"question": "Is PT-1042 eligible for NCT99004324?"},
+            json={"question": "Assess renewal."},
         )
         assert response.status_code == 401
     finally:

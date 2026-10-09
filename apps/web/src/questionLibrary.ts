@@ -2,64 +2,54 @@ export interface QuestionExample {
   category: string
   short: string
   prompt: string
+  accountId: string
+  renewalId: string
 }
 
 export const questionCategories = [
   'All',
-  'Trial Eligibility',
-  'Screening Check',
-  'Evidence',
-  'Workflow',
-  'Protocol',
-  'Data Gaps',
-  'External Context',
+  'Understand',
+  'Prepare',
+  'Expand',
+  'Act',
 ] as const
 
 export type QuestionCategory = (typeof questionCategories)[number]
 
 export const questionLibrary: QuestionExample[] = [
   {
-    category: 'Trial Eligibility',
-    short: 'Is this patient eligible for this trial?',
+    category: 'Understand',
+    short: 'Should we reduce the renewal forecast?',
+    accountId: 'ACC-1001',
+    renewalId: 'REN-1001',
     prompt:
-      'Is Alex Morgan eligible for the EGFR exon 20 NSCLC trial (NCT99004324), and what needs review before screening?',
+      'Should we continue forecasting the full $2.4M Alder Creek Unified School District renewal, or reduce the forecast now? Return a Yes, No, or Not yet verdict with confidence, criteria met, criteria not met, contradictory evidence, missing evidence, and the next forecast action.',
   },
   {
-    category: 'Screening Check',
-    short: 'What is preventing this patient from moving to screening?',
+    category: 'Prepare',
+    short: 'Are we ready to send the proposal?',
+    accountId: 'ACC-1001',
+    renewalId: 'REN-1001',
     prompt:
-      'What is preventing PT-1042 from moving to formal trial screening for NCT99004324?',
+      'Are we ready to send Alder Creek Unified School District the three-year price-protected renewal proposal by October 13? Return a Yes, No, or Not yet verdict based on pricing approval, payment status, support recovery, customer requirements, and open commitments; identify every remaining condition and its owner.',
   },
   {
-    category: 'Evidence',
-    short: 'Prepare an evidence packet for PI review.',
+    category: 'Expand',
+    short: 'Should we fund the architecture workshop?',
+    accountId: 'ACC-1001',
+    renewalId: 'REN-1001',
     prompt:
-      'Prepare an evidence packet for PI review of PT-1042 and NCT99004324 with patient facts, protocol criteria, and unresolved issues.',
+      'Should we advance the $450K Alder Creek Unified School District AI Automation opportunity to a funded architecture workshop now? Return a Yes, No, or Not yet verdict based on district demand, sponsor strength, product fit, technical prerequisites, architect capacity, support trust, and measurable expansion value.',
   },
   {
-    category: 'Workflow',
-    short: 'Who should own the next step and what action should be drafted?',
+    category: 'Act',
+    short: 'Should we accelerate Fabrikam expansion?',
+    accountId: 'ACC-1002',
+    renewalId: 'REN-1002',
     prompt:
-      'For PT-1042 and NCT99004324, who should own the next step, and what action should be drafted for human review?',
-  },
-  {
-    category: 'Protocol',
-    short: 'Does prior therapy conflict with the trial exclusion?',
-    prompt:
-      'Does the prior platinum therapy history for PT-1042 conflict with the NCT99004324 exclusion criteria?',
-  },
-  {
-    category: 'Data Gaps',
-    short: 'What patient data is missing before we can advance?',
-    prompt:
-      'What patient data is missing or stale for PT-1042 before the NCT99004324 case can advance?',
-  },
-  {
-    category: 'External Context',
-    short: 'What external context is relevant to this biomarker?',
-    prompt:
-      'For Alex Morgan and NCT99004324, what external trial registry or treatment landscape context is relevant to the EGFR exon 20 biomarker?',
+      'Should we accelerate the $300K Fabrikam Unified School District AI Automation expansion now? Return a Yes, No, or Not yet verdict based on executive sponsorship, adoption strength, customer demand, architecture and security readiness, specialist capacity, support health, payment status, and measurable value criteria.',
   },
 ]
 
 export const defaultQuestion = questionLibrary[0].prompt
+export const defaultQuestionExample = questionLibrary[0]

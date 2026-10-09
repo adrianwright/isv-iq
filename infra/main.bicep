@@ -6,7 +6,7 @@ param location string = resourceGroup().location
 @description('Tenant for Key Vault and managed-identity auth.')
 param tenantId string
 
-@description('API container image. azd deploy replaces this placeholder with the built AMC IQ API image.')
+@description('API container image. azd deploy replaces this placeholder with the built ISV API image.')
 param apiContainerImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 
 @description('Port exposed by the API container.')
@@ -21,17 +21,23 @@ param appInsightsName string
 @description('Container Apps managed environment name.')
 param containerAppsEnvironmentName string
 
+@description('Azure region for the Container Apps environment and API.')
+param containerAppsLocation string = location
+
 @description('Container App for the FastAPI backend.')
 param apiContainerAppName string
 
 @description('Static Web App for the React/Vite UI.')
 param staticWebAppName string
 
+@description('Azure region for the Static Web App resource.')
+param staticWebAppLocation string = location
+
 @description('Azure Container Registry for azd-built API images.')
-param containerRegistryName string = take(toLower('amciq${uniqueString(resourceGroup().id)}acr'), 50)
+param containerRegistryName string = take(toLower('msiqisv${uniqueString(resourceGroup().id)}acr'), 50)
 
 @description('Key Vault for future app secrets. Prefer managed identity and avoid storing keys.')
-param keyVaultName string = take(toLower('amciq${uniqueString(resourceGroup().id)}kv'), 24)
+param keyVaultName string = take(toLower('msiqisv${uniqueString(resourceGroup().id)}kv'), 24)
 
 @description('User-assigned managed identity shared by the API and role assignments.')
 param managedIdentityName string
@@ -42,38 +48,26 @@ param existingSearchResourceGroupName string
 @description('Existing Azure AI Search service. Referenced only; not recreated.')
 param existingSearchServiceName string
 
-@description('Existing Foundry account resource group. Referenced only; not recreated.')
-param existingFoundryResourceGroupName string
-
-@description('Existing Foundry account. Referenced only; not recreated.')
-param existingFoundryAccountName string
-
-@description('Foundry project name used by live agent tooling.')
-param foundryProjectName string
-
 @description('Foundry IQ knowledge base name created by agent/provisioning.')
-param foundryKbName string
+param isvFoundryKbName string
 
 @description('Web knowledge base name used by live web search.')
-param webKbName string
+param isvWebKbName string
 
 @description('Native Microsoft Web IQ REST endpoint.')
-param webIqEndpoint string = 'https://api.microsoft.ai/v3/search/web'
+param isvWebIqEndpoint string = 'https://api.microsoft.ai/v3/search/web'
 
 @description('Existing Key Vault secret containing the native Web IQ evaluation API key.')
-param webIqApiKeySecretName string
+param isvWebIqApiKeySecretName string
 
 @description('Optional Azure AI Search endpoint override. When empty, derived from existingSearchServiceName.')
 param searchEndpoint string = ''
 
-@description('Optional Foundry project endpoint override. When empty, derived from account and project names.')
-param projectEndpoint string = ''
-
 @description('Fabric workspace ID used by the API when live Fabric is enabled.')
-param fabricWorkspaceId string
+param isvFabricWorkspaceId string
 
 @description('Fabric Data Agent ID used by the API when live Fabric is enabled.')
-param fabricDataAgentId string
+param isvFabricDataAgentId string
 
 @description('Resource group of the backing Fabric capacity used for the optional status indicator.')
 param fabricCapacityResourceGroup string
@@ -81,30 +75,19 @@ param fabricCapacityResourceGroup string
 @description('Backing Fabric capacity resource name used for the optional status indicator.')
 param fabricCapacityName string
 
-@description('Foundry eligibility-evaluator agent name used by the production Fabric-native path.')
-param eligibilityEvaluatorAgentName string
-
-@description('Optional hosted specialist agent names. Required by the API when useLiveSpecialists is true.')
-param specialistEligibilityAgentName string = ''
-param specialistRenalAgentName string = ''
-param specialistGenomicsAgentName string = ''
-param specialistProtocolAgentName string = ''
-param specialistWorkflowAgentName string = ''
-param specialistEvidenceAgentName string = ''
-
-@description('Application client ID for the confidential amciq-workiq-client registration.')
+@description('Application client ID for the confidential Work IQ OBO registration.')
 param workIqClientId string
 
 @description('Application client ID for the operator-provided public SPA registration.')
 param webClientId string
 
-@description('Exact audience accepted by the AMC IQ API access-token validator.')
+@description('Exact audience accepted by the Microsoft IQ for ISVs API access-token validator.')
 param apiAudience string
 
-@description('Delegated scope claim required by protected AMC IQ API endpoints.')
+@description('Delegated scope claim required by protected API endpoints.')
 param apiRequiredScope string = 'access_as_user'
 
-@description('Fully qualified delegated AMC IQ API scope requested by the SPA.')
+@description('Fully qualified delegated API scope requested by the SPA.')
 param webApiScope string
 
 @description('Existing exportable Key Vault certificate secret read by the API managed identity.')
@@ -117,27 +100,23 @@ param workIqEndpoint string = 'https://workiq.svc.cloud.microsoft/a2a/'
 param workIqScope string = 'api://workiq.svc.cloud.microsoft/.default'
 
 @description('Enable live Work IQ integration. Disabled by default to preserve mock fallback behavior.')
-param useLiveWork bool = false
-
-@description('Enable live specialist narration. Disable for the faster grounded specialist team.')
-param useLiveSpecialists bool = false
+param useLiveIsvWork bool = false
 
 @description('Tags applied to every taggable new resource.')
 param tags object = {
-  project: 'amc-iq'
-  scenario: 'foundry-iq'
+  project: 'microsoft-iq-isv'
+  scenario: 'renewal-expansion'
   env: 'poc'
 }
 
 var effectiveSearchEndpoint = empty(searchEndpoint) ? 'https://${existingSearchServiceName}.search.windows.net' : searchEndpoint
-var effectiveProjectEndpoint = empty(projectEndpoint) ? 'https://${existingFoundryAccountName}.services.ai.azure.com/api/projects/${foundryProjectName}' : projectEndpoint
 
 resource deployedKeyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
   name: keyVaultName
 }
 
 module identity 'modules/identity.bicep' = {
-  name: 'amciq-identity'
+  name: 'msiqisv-identity'
   params: {
     location: location
     managedIdentityName: managedIdentityName
@@ -146,7 +125,7 @@ module identity 'modules/identity.bicep' = {
 }
 
 module observability 'modules/observability.bicep' = {
-  name: 'amciq-observability'
+  name: 'msiqisv-observability'
   params: {
     location: location
     logAnalyticsName: logAnalyticsName
@@ -156,7 +135,7 @@ module observability 'modules/observability.bicep' = {
 }
 
 module keyVault 'modules/keyvault.bicep' = {
-  name: 'amciq-keyvault'
+  name: 'msiqisv-keyvault'
   params: {
     location: location
     tenantId: tenantId
@@ -168,14 +147,16 @@ module keyVault 'modules/keyvault.bicep' = {
 }
 
 module apps 'modules/apps.bicep' = {
-  name: 'amciq-apps'
+  name: 'msiqisv-apps'
   params: {
     location: location
+    containerAppsLocation: containerAppsLocation
     containerAppsEnvironmentName: containerAppsEnvironmentName
     apiContainerAppName: apiContainerAppName
     apiContainerImage: apiContainerImage
     apiContainerPort: apiContainerPort
     staticWebAppName: staticWebAppName
+    staticWebAppLocation: staticWebAppLocation
     containerRegistryName: containerRegistryName
     logAnalyticsCustomerId: observability.outputs.logAnalyticsCustomerId
     logAnalyticsSharedKey: observability.outputs.logAnalyticsSharedKey
@@ -183,24 +164,16 @@ module apps 'modules/apps.bicep' = {
     identityResourceId: identity.outputs.identityId
     identityPrincipalId: identity.outputs.principalId
     identityClientId: identity.outputs.clientId
-    searchEndpoint: effectiveSearchEndpoint
-    foundryKbName: foundryKbName
-    webKbName: webKbName
-    webIqEndpoint: webIqEndpoint
-    webIqApiKey: deployedKeyVault.getSecret(webIqApiKeySecretName)
-    projectEndpoint: effectiveProjectEndpoint
-    fabricWorkspaceId: fabricWorkspaceId
-    fabricDataAgentId: fabricDataAgentId
+    isvSearchEndpoint: effectiveSearchEndpoint
+    isvFoundryKbName: isvFoundryKbName
+    isvWebKbName: isvWebKbName
+    isvWebIqEndpoint: isvWebIqEndpoint
+    isvWebIqApiKey: deployedKeyVault.getSecret(isvWebIqApiKeySecretName)
+    isvFabricWorkspaceId: isvFabricWorkspaceId
+    isvFabricDataAgentId: isvFabricDataAgentId
     azureSubscriptionId: subscription().subscriptionId
     fabricCapacityResourceGroup: fabricCapacityResourceGroup
     fabricCapacityName: fabricCapacityName
-    eligibilityEvaluatorAgentName: eligibilityEvaluatorAgentName
-    specialistEligibilityAgentName: specialistEligibilityAgentName
-    specialistRenalAgentName: specialistRenalAgentName
-    specialistGenomicsAgentName: specialistGenomicsAgentName
-    specialistProtocolAgentName: specialistProtocolAgentName
-    specialistWorkflowAgentName: specialistWorkflowAgentName
-    specialistEvidenceAgentName: specialistEvidenceAgentName
     tenantId: tenantId
     apiAudience: apiAudience
     apiRequiredScope: apiRequiredScope
@@ -209,28 +182,17 @@ module apps 'modules/apps.bicep' = {
     workIqClientCertificateSecretName: workIqClientCertificateSecretName
     workIqEndpoint: workIqEndpoint
     workIqScope: workIqScope
-    useLiveWork: useLiveWork
-    useLiveSpecialists: useLiveSpecialists
+    useLiveIsvWork: useLiveIsvWork
     keyVaultUri: keyVault.outputs.keyVaultUri
     tags: tags
   }
 }
 
 module searchRole 'modules/search-role.bicep' = {
-  name: 'amciq-api-search-reader'
+  name: 'msiqisv-api-search-reader'
   scope: resourceGroup(subscription().subscriptionId, existingSearchResourceGroupName)
   params: {
     searchServiceName: existingSearchServiceName
-    principalId: identity.outputs.principalId
-    roleAssignmentSeed: managedIdentityName
-  }
-}
-
-module foundryRole 'modules/foundry-role.bicep' = {
-  name: 'amciq-api-foundry-user'
-  scope: resourceGroup(subscription().subscriptionId, existingFoundryResourceGroupName)
-  params: {
-    foundryAccountName: existingFoundryAccountName
     principalId: identity.outputs.principalId
     roleAssignmentSeed: managedIdentityName
   }

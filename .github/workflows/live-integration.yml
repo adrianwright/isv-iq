@@ -7,11 +7,6 @@ on:
         description: Explicit HTTPS origin of the operator-owned API (no trailing slash)
         required: true
         type: string
-      run_fabric_probe:
-        description: Run the read-only Fabric Lakehouse Data Agent MCP probe
-        required: true
-        default: false
-        type: boolean
 
 permissions:
   contents: read
@@ -52,12 +47,3 @@ jobs:
           esac
           curl --fail --silent --show-error "$API_BASE_URL/healthz"
           curl --fail --silent --show-error "$API_BASE_URL/api/fabric/status"
-      - name: Probe Fabric Data Agent MCP
-        if: ${{ inputs.run_fabric_probe }}
-        env:
-          FABRIC_WORKSPACE_ID: ${{ vars.FABRIC_WORKSPACE_ID }}
-          FABRIC_DATA_AGENT_ID: ${{ vars.FABRIC_DATA_AGENT_ID }}
-        run: |
-          test -n "$FABRIC_WORKSPACE_ID" || { echo "live-integration FABRIC_WORKSPACE_ID variable is required" >&2; exit 2; }
-          test -n "$FABRIC_DATA_AGENT_ID" || { echo "live-integration FABRIC_DATA_AGENT_ID variable is required" >&2; exit 2; }
-          python scripts/probe_fabric_mcp.py

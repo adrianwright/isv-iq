@@ -1,9 +1,21 @@
+import { Database, FileText, Globe, Mail, type LucideIcon } from 'lucide-react'
 import { sourceClass, sourceIcon } from '../sourceMeta'
 import { statusLabel } from '../sourceMeta'
 import type { SourceMapEntry } from '../types'
 
 interface IQActivityBarProps {
   entries: SourceMapEntry[]
+}
+
+const feeds: Partial<Record<SourceMapEntry['source'], { label: string; icon: LucideIcon }>> = {
+  work: { label: 'M365 mail, meetings, chats', icon: Mail },
+  web: { label: 'Public internet', icon: Globe },
+  foundry: { label: 'Policy & contract docs', icon: FileText },
+  fabric: { label: 'Sales & usage data', icon: Database },
+}
+
+function formatLatency(durationMs: number): string {
+  return durationMs >= 1000 ? `${(durationMs / 1000).toFixed(1)} s` : `${Math.round(durationMs)} ms`
 }
 
 function isActive(status: SourceMapEntry['status']): boolean {
@@ -32,6 +44,24 @@ export function IQActivityBar({ entries }: IQActivityBarProps) {
             key={entry.source}
             className={`iq-chip ${sourceClass(entry.source)} status-${entry.status}`}
           >
+            {(() => {
+              const feed = feeds[entry.source]
+              if (!feed) return null
+              const FeedIcon = feed.icon
+              return (
+                <div className="iq-feed" aria-hidden="true">
+                  <span className="iq-feed-origin">
+                    <FeedIcon size={12} strokeWidth={2.2} />
+                    {feed.label}
+                  </span>
+                  <span className="iq-feed-track">
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                </div>
+              )
+            })()}
             <div className="iq-chip-head">
               <span className="iq-chip-name">
                 {(() => {
@@ -71,7 +101,7 @@ export function IQActivityBar({ entries }: IQActivityBarProps) {
               ) : (
                 <span className="iq-count muted">{statusLabel(entry.status)}</span>
               )}
-              {entry.durationMs ? <span className="iq-latency">{Math.round(entry.durationMs)} ms</span> : null}
+              {entry.durationMs ? <span className="iq-latency">{formatLatency(entry.durationMs)}</span> : null}
             </div>
           </div>
         ))}

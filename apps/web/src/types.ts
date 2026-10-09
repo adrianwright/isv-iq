@@ -1,5 +1,4 @@
 export type IQSource = 'foundry' | 'fabric' | 'work' | 'web'
-
 export type SourceStatus =
   | 'idle'
   | 'queued'
@@ -8,78 +7,22 @@ export type SourceStatus =
   | 'needs_review'
   | 'complete'
   | 'failed'
-
 export type Confidence = 'low' | 'medium' | 'high'
-
-export type EligibilityAssessment =
-  | 'eligible'
-  | 'likely_eligible_pending'
-  | 'not_eligible'
-  | 'indeterminate'
-
-export type CriterionStatus = 'met' | 'uncertain' | 'not_met'
-
 export type TraceStatus = 'completed' | 'in_progress' | 'pending' | 'queued'
-
 export type ReviewerStatus = 'assigned' | 'pending' | 'complete'
+export type RenewalStatus = 'on_track' | 'at_risk' | 'critical' | 'indeterminate'
+export type SignalStatus = 'positive' | 'watch' | 'negative' | 'unknown'
 
-export interface AskRequest {
+export interface ISVAskRequest {
   question: string
-  patientId?: string
-  trialId?: string
-}
-
-export type FabricState = 'Active' | 'Paused' | 'Pausing' | 'Resuming' | 'Unknown'
-
-export interface FabricStatus {
-  state: FabricState
-  capacityName: string
-  portalUrl: string
-  detail?: string | null
+  accountId?: string
+  renewalId?: string
 }
 
 export interface Person {
   id: string
   display: string
   role: string
-}
-
-export interface Patient {
-  id: string
-  mrn: string
-  display: string
-  age: number
-  sex: string
-  ecog: number
-  diagnosis: string
-  stage: string
-  biomarkers: string[]
-  crcl: number
-  crclDate: string
-}
-
-export interface Eligibility {
-  assessment: EligibilityAssessment
-  label: string
-  confidence: Confidence
-}
-
-export interface Trial {
-  id: string
-  short: string
-  status: string
-  humanName: string
-  title: string
-  phase: string
-  sponsor: string
-  keyIssue: string
-  latestProtocol?: string
-}
-
-export interface Criterion {
-  text: string
-  status: CriterionStatus
-  evidenceRefs: string[]
 }
 
 export interface Evidence {
@@ -133,17 +76,125 @@ export interface TraceStep {
   status?: TraceStatus
 }
 
-export interface AskResult {
+export interface AccountSnapshot {
+  id: string
+  name: string
+  industry: string
+  segment: string
+  region: string
+  health: string
+  annualRecurringRevenue: number
+  currency: string
+  primaryContact: string
+  executiveSponsor: string
+}
+
+export interface RenewalSummary {
+  id: string
+  renewalDate: string
+  daysToRenewal: number
+  currentArr: number
+  forecastArr: number
+  currency: string
+  stage: string
+  requestedTermMonths: number
+}
+
+export interface RenewalAssessment {
+  status: RenewalStatus
+  label: string
+  confidence: Confidence
+}
+
+export interface BusinessSignal {
+  id: string
+  category: 'adoption' | 'support' | 'commercial' | 'relationship' | 'expansion'
+  title: string
+  status: SignalStatus
+  impact: string
+  evidenceRefs: string[]
+  owner?: string | null
+  remediation?: string | null
+}
+
+export interface BusinessRisk {
+  id: string
+  title: string
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  impact: string
+  evidenceRefs: string[]
+}
+
+export interface ExpansionOpportunity {
+  id: string
+  product: string
+  estimatedArr: number
+  currency: string
+  fit: 'weak' | 'moderate' | 'strong'
+  confidence: Confidence
+  rationale: string
+  blockers: string[]
+  evidenceRefs: string[]
+}
+
+export interface SpecialistInsight {
+  id: 'commercial' | 'adoption' | 'support' | 'relationship' | 'expansion'
+  label: string
+  domain: string
+  status: SignalStatus
+  summary: string
+  recommendation: string
+  evidenceRefs: string[]
+  investigationLead?: string | null
+}
+
+export interface PortfolioAccount {
+  id: string
+  name: string
+  industry: string
+  segment: string
+  region: string
+  renewalId: string
+  renewalDate: string
+  daysToRenewal: number
+  currentArr: number
+  forecastArr: number
+  currency: string
+  status: RenewalStatus
+  confidence: Confidence
+  expansionArr: number
+  priority: number
+  primaryDriver: string
+  recommendedMotion: string
+  hero: boolean
+}
+
+export interface ISVPortfolio {
+  schemaVersion: 'isv.portfolio.v1'
+  asOf: string
+  totalArr: number
+  forecastArr: number
+  expansionPipeline: number
+  atRiskArr: number
+  accounts: PortfolioAccount[]
+  disclaimer: string
+}
+
+export interface ISVAskResult {
+  schemaVersion: 'isv.v1'
   question: string
-  answer?: string
-  answerRefs?: string[]
-  intent?: string
-  scope?: string
-  bottomLine?: string
-  patient: Patient
-  eligibility: Eligibility
-  trial: Trial
-  criteria: Criterion[]
+  answer: string
+  answerRefs: string[]
+  intent: string
+  scope: string
+  bottomLine: string
+  account: AccountSnapshot
+  renewal: RenewalSummary
+  assessment: RenewalAssessment
+  signals: BusinessSignal[]
+  risks: BusinessRisk[]
+  opportunities: ExpansionOpportunity[]
+  specialists?: SpecialistInsight[]
   evidence: Evidence[]
   missingData: string[]
   nextAction: NextAction
@@ -152,9 +203,18 @@ export interface AskResult {
   unavailableSources: string[]
   sourceMap: SourceMapEntry[]
   trace: TraceStep[]
-  agentDriven?: boolean
+  agentDriven: boolean
   mode: 'mock' | 'live'
   disclaimer: string
+}
+
+export type FabricState = 'Active' | 'Paused' | 'Pausing' | 'Resuming' | 'Unknown'
+
+export interface FabricStatus {
+  state: FabricState
+  capacityName: string
+  portalUrl: string
+  detail?: string | null
 }
 
 export interface PlanEvent {
@@ -180,10 +240,6 @@ export interface SourceResultEvent {
   evidenceNoun?: string
 }
 
-export interface TokenEvent {
-  text: string
-}
-
 export interface AgentActivityEvent {
   phase: 'tool_start' | 'tool_done' | 'answer_delta'
   source?: IQSource
@@ -191,19 +247,14 @@ export interface AgentActivityEvent {
   text?: string
 }
 
-export interface FinalEvent {
-  result: AskResult
-}
-
 export interface ErrorEventPayload {
   message: string
 }
 
-export type StreamEvent =
+export type ISVStreamEvent =
   | { type: 'plan'; data: PlanEvent }
   | { type: 'source_query'; data: SourceQueryEvent }
   | { type: 'source_result'; data: SourceResultEvent }
-  | { type: 'token'; data: TokenEvent }
   | { type: 'agent_activity'; data: AgentActivityEvent }
-  | { type: 'final'; data: FinalEvent }
+  | { type: 'final'; data: { result: ISVAskResult } }
   | { type: 'error'; data: ErrorEventPayload }

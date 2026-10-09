@@ -52,13 +52,13 @@ jobs:
           python -m pip_audit -r services/api/requirements.lock.txt
           python -m pip_audit -r tools/requirements.lock.txt
       - name: Validate synthetic data
-        run: python tools/validate_consistency.py
+        run: python tools/validate_isv_consistency.py
       - name: Run API and provisioning tests
-        run: python -m pytest services/api/tests agent/provisioning/live -q
+        run: python -m pytest services/api/tests agent/provisioning/isv data/isv -q
       - name: Type-check API
         run: python -m pyright
       - name: Compile Python sources
-        run: python -m compileall -q services/api/app agent/provisioning/live
+        run: python -m compileall -q services/api/app agent/provisioning/isv data/isv
       - name: Compile Bicep
         run: az bicep build --file infra/main.bicep --stdout > /dev/null
       - name: Check patch whitespace

@@ -1,38 +1,38 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   ChevronDown,
-  ClipboardCheck,
-  Database,
-  FileText,
-  Globe,
+  CircleHelp,
+  Expand,
   LayoutGrid,
-  ScrollText,
-  ShieldAlert,
+  Target,
   Workflow,
   type LucideIcon,
 } from 'lucide-react'
-import { questionCategories, questionLibrary, type QuestionCategory } from '../questionLibrary'
+import {
+  questionCategories,
+  questionLibrary,
+  type QuestionCategory,
+  type QuestionExample,
+} from '../questionLibrary'
 
 interface QuestionLibraryProps {
   question: string
   isLoading: boolean
   onQuestionChange: (question: string) => void
+  onSelectExample: (example: QuestionExample) => void
   onAsk: () => void
 }
 
 const categoryIcon: Record<QuestionCategory, LucideIcon> = {
   All: LayoutGrid,
-  'Trial Eligibility': ClipboardCheck,
-  'Screening Check': ShieldAlert,
-  Evidence: FileText,
-  Workflow: Workflow,
-  Protocol: ScrollText,
-  'Data Gaps': Database,
-  'External Context': Globe,
+  Understand: CircleHelp,
+  Prepare: Workflow,
+  Expand: Expand,
+  Act: Target,
 }
 
 const MAX_LEN = 2000
-const OPEN_STORAGE_KEY = 'amciq.questionBankOpen'
+const OPEN_STORAGE_KEY = 'microsoftIqIsv.questionBankOpen'
 
 function readInitialOpen(): boolean {
   if (typeof window === 'undefined') return false
@@ -44,7 +44,13 @@ function readInitialOpen(): boolean {
   }
 }
 
-export function QuestionLibrary({ question, isLoading, onQuestionChange, onAsk }: QuestionLibraryProps) {
+export function QuestionLibrary({
+  question,
+  isLoading,
+  onQuestionChange,
+  onSelectExample,
+  onAsk,
+}: QuestionLibraryProps) {
   const [activeCategory, setActiveCategory] = useState<QuestionCategory>('All')
   const [isOpen, setIsOpen] = useState<boolean>(readInitialOpen)
 
@@ -114,7 +120,7 @@ export function QuestionLibrary({ question, isLoading, onQuestionChange, onAsk }
                 key={item.short}
                 type="button"
                 className={question === item.prompt ? 'question-chip active' : 'question-chip'}
-                onClick={() => onQuestionChange(item.prompt)}
+                onClick={() => onSelectExample(item)}
               >
                 <span className="chip-category">{item.category}</span>
                 <span className="chip-text">{item.short}</span>
@@ -137,7 +143,7 @@ export function QuestionLibrary({ question, isLoading, onQuestionChange, onAsk }
           maxLength={MAX_LEN}
           onChange={(event) => onQuestionChange(event.target.value)}
           rows={3}
-          placeholder="Ask a trial readiness question, or expand the question library for examples."
+          placeholder="Ask about renewal risk, customer health, commitments, or expansion."
         />
         <div className="prompt-actions">
           <span className="char-count">

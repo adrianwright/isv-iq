@@ -10,8 +10,8 @@ export function TopBar({ mode, fabricStatus }: TopBarProps) {
   return (
     <header className="top-bar" id="assessment-top">
       <div className="top-bar-title">
-        <h1>Precision Oncology Trial Readiness</h1>
-        <p>Synthetic AMC sandbox. No PHI. Requires human review.</p>
+        <h1>Customer Renewal and Expansion Intelligence</h1>
+        <p>Synthetic ISV scenario. Four-IQ evidence with human review.</p>
       </div>
       <div className="top-bar-meta">
         <FabricStatusChip status={fabricStatus ?? null} />

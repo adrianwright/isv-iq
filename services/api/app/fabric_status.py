@@ -62,7 +62,7 @@ def _read_arm_state(settings: Settings) -> FabricStatus:
             portal_url="",
             detail="Fabric capacity status is disabled in mock mode.",
         )
-    portal_url = settings.fabric_portal_url
+    portal_url = settings.isv_fabric_portal_url
     name = settings.FABRIC_CAPACITY_NAME
     if not all(
         value.strip()

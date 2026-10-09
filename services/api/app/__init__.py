@@ -1,1 +1,1 @@
-"""AMC IQ FastAPI backend."""
+"""Microsoft IQ for ISVs FastAPI backend."""

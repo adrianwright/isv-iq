@@ -1,0 +1,7 @@
+id,account_id,display_name,title,role,influence,sentiment
+CON-1001,ACC-1001,Maya Chen,Chief Information Officer,executive_buyer,high,concerned
+CON-1002,ACC-1001,Daniel Ortiz,"Deputy Superintendent, Operations",champion,high,supportive
+CON-1003,ACC-1001,Aisha Rahman,"Director, Technology Services",operational_stakeholder,medium,frustrated
+CON-2001,ACC-1002,Elena Torres,Chief Digital Officer,executive_buyer,high,supportive
+CON-2002,ACC-1002,Marcus Reed,"Deputy Superintendent, Operations",champion,high,supportive
+CON-2003,ACC-1002,Nina Park,"Director, Enterprise Architecture",technical_stakeholder,high,positive

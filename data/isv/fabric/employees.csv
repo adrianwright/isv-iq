@@ -1,0 +1,11 @@
+id,display_name,title,skills,availability
+EMP-1001,Jordan Lee,Strategic Account Executive,"[""commercial_strategy"",""executive_relationships""]",available
+EMP-1002,Morgan Patel,Customer Success Manager,"[""adoption"",""success_planning""]",available
+EMP-1003,Riley Nguyen,Principal Solution Architect,"[""ai_automation"",""integration_architecture""]",constrained
+EMP-1004,Alex Johnson,Executive Sponsor,"[""executive_alignment""]",available
+EMP-1005,Casey Williams,Support Escalation Manager,"[""incident_management"",""service_recovery""]",available
+EMP-2001,Sam Rivera,Enterprise Account Executive,"[""commercial_strategy"",""education_industry""]",available
+EMP-2002,Priya Shah,Customer Success Manager,"[""adoption"",""value_realization""]",available
+EMP-2003,Taylor Brooks,Principal Solution Architect,"[""ai_automation"",""education_architecture""]",available
+EMP-2004,Avery Morgan,Executive Sponsor,"[""executive_alignment"",""education_strategy""]",available
+EMP-2005,Drew Kim,Support Success Manager,"[""service_health"",""incident_prevention""]",available

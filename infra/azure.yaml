@@ -1,6 +1,6 @@
-name: amc-iq
+name: microsoft-iq-isv
 metadata:
-  template: amc-iq-foundry-iq-poc
+  template: microsoft-iq-isv
 
 # This azure.yaml is intentionally located under infra/ to honor the authoring
 # boundary for this task. Run azd from this directory:

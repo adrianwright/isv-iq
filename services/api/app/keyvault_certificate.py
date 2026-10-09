@@ -8,7 +8,7 @@ from typing import Protocol
 
 from azure.core.exceptions import AzureError
 from azure.identity import ManagedIdentityCredential
-from azure.keyvault.secrets import SecretClient
+from azure.keyvault.secrets import SecretClient  # pyright: ignore[reportMissingImports]
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.serialization import pkcs12
 

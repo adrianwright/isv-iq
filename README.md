@@ -1,281 +1,129 @@
-# AMC IQ: Microsoft IQ Intelligence Layer Proof of Concept
+# Microsoft IQ for ISVs
 
-> **Synthetic only. No PHI. Not clinical decision support.**
-> This project does not use real patient data and is not intended for clinical decision support,
-> diagnosis, treatment, trial enrollment, or patient care. All assessments require review by
-> qualified clinical and research professionals. It illustrates an AI architecture pattern for
-> research operations, not a clinical system.
+> **Synthetic demo data only. Human review is required.**
 
-AMC IQ is a proof of concept for what a Microsoft IQ intelligence layer could look like in a
-research-focused academic medical center. In a connected/live implementation, **Foundry IQ** grounds
-institutional knowledge, **Fabric IQ** resolves structured clinical and operational context,
-**Work IQ** contributes care-team workflow state, and **Web IQ** adds current external evidence.
-Together they feed a single orchestrator that assembles a research eligibility assessment with
-citations, open questions, and a drafted next step for human review. The repository stays truthful
-about runtime defaults: `scripts/dev.ps1` runs a safe deterministic mock path backed by synthetic
-data, drafted outputs, and no live task submission.
+Microsoft IQ for ISVs demonstrates how software companies can combine four Microsoft IQ layers to
+understand customer renewals, recover at-risk accounts, and identify responsible expansion motions.
+The flagship scenario is **Customer Renewal and Expansion Intelligence** for the synthetic Alder
+Creek Unified School District account, with Fabrikam Unified School District as a positive expansion
+contrast in a five-school-district renewal portfolio.
 
-## Concept walkthrough
+The application combines:
 
-These conceptual diagrams show why a single research question needs multiple knowledge domains,
-how agentic retrieval decomposes it, and how evidence is reconciled into a human-reviewed result.
-Select any image to open the full-resolution version.
+- **Fabric IQ** for account, subscription, usage, support, invoice, renewal, and opportunity facts.
+- **Foundry IQ** for contracts, support policies, pricing guidance, product briefs, and recovery
+  playbooks.
+- **Work IQ** for customer meetings, account-team plans, commitments, and workplace context.
+- **Web IQ** for current public company, leadership, strategy, and competitive evidence.
 
-[![A typical oncology trial question spanning multiple grounding sources](docs/images/amc-iq-01.png)](docs/images/amc-iq-01.png)
+It returns an evidence-backed assessment, structured risks, missing information, recommendations,
+specialist findings, and a drafted next action for human review. No customer system or Microsoft 365
+action is submitted automatically.
 
-*A cross-domain trial-readiness question. The illustration uses the abbreviated conceptual trial
-label `NCT-4324`; the runnable synthetic demo uses `NCT99004324`.*
+## Experience
 
-[![The clinical research knowledge ecosystem surrounding an oncology question](docs/images/amc-iq-00.png)](docs/images/amc-iq-00.png)
+The React application provides:
 
-*A conceptual knowledge ecosystem. People and teams are context participants; EHR, genomics and
-pathology, trial protocols, and guidelines and policy are retrievable knowledge sources.*
+- a portfolio view with total ARR, forecast ARR, at-risk ARR, and expansion pipeline;
+- prioritized renewal motions across five synthetic accounts;
+- a detailed four-IQ assessment for Alder Creek Unified School District;
+- commercial, adoption, support, relationship, and expansion specialists;
+- REST and Server-Sent Events retrieval with source activity and evidence links;
+- explicit missing-data, reviewer, and human-approval boundaries.
 
-[![Question clauses mapped to their supporting evidence domains](docs/images/amc-iq-02.png)](docs/images/amc-iq-02.png)
-
-*A conceptual map from question clauses to evidence domains. The illustration uses the abbreviated
-trial label `NCT-4324`; the runnable synthetic demo uses `NCT99004324`.*
-
-[![Agentic retrieval engine decomposing, retrieving, and merging evidence](docs/images/amc-iq-03.png)](docs/images/amc-iq-03.png)
-
-*The agentic retrieval pattern: plan and review, select knowledge sources, merge evidence, and keep
-the resulting assessment and next action subject to human review. Actual integrations depend on
-the IQ providers enabled for a deployment.*
-
-## Screenshots
-
-![Question entry, IQ activity, and building assessment](docs/images/building-assessment-workflow.png)
-
-*Select and edit a question-bank prompt or enter any free-form question, then watch the four IQ
-context providers retrieve evidence in parallel while the assessment is built.*
-
-![Final trial readiness assessment](docs/images/final-trial-readiness-assessment.png)
-
-*Review the completed criteria, open issues, drafted next action, reviewer status, patient
-snapshot, and safety boundary.*
-
-![Citations and assessment steps](docs/images/citations-and-assessment-steps.png)
-
-*Inspect the evidence packet, source links, and the specialist retrieval and reconciliation steps
-behind the assessment.*
-
-## Connected/live architecture
+## Architecture
 
 ```text
-React/Vite research UI -> REST + SSE -> FastAPI orchestrator -> Hosted Foundry agent (optional)
-                                              |
-                                              +-> Foundry IQ
-                                              +-> Fabric IQ
-                                              +-> Work IQ
-                                              `-> Web IQ
+React/Vite UI
+    |
+    +-- GET  /api/isv/portfolio
+    +-- POST /api/isv/ask
+    `-- POST /api/isv/ask/stream
+                 |
+                 v
+         FastAPI orchestrator
+          /      |      |      \
+   Foundry IQ Fabric IQ Work IQ Web IQ
+          \      |      |      /
+        grounded ISV specialists
+                 |
+          human-reviewed result
 ```
 
-In the connected/live architecture, the backend fans out to all four IQ layers in parallel and
-starts eligibility evaluation as soon as Fabric context is available, overlapping slower providers.
-When you run the repository locally with `scripts/dev.ps1`, those live edges stay off and the same
-orchestration contract is exercised with synthetic mock/local fallbacks. See
-[`docs/backend.md`](docs/backend.md) for the full orchestration lifecycle.
+Local mode is deterministic and reads only `data/isv/`. Connected providers are independently
+gated and fail explicitly when required grounding is unavailable.
 
-## IQ source map
+## Run locally
 
-| Layer | Connected/live role | Mock/local fallback | Backing technology |
-|---|---|---|---|
-| **Foundry IQ** | Institutional knowledge from protocols, IRB and consent material, notes, pathology, genomics, and SOPs | Local markdown corpus in `data/foundry_docs/*.md` served through the same evidence route | Azure AI Search agentic-retrieval knowledge base with MCP `knowledge_base_retrieve` |
-| **Fabric IQ** | Structured clinical and operational data such as registry, labs, treatments, trials, and scheduling | Local CSV package in `data/fabric/*.csv` shaped to the same eligibility flow | Fabric Lakehouse plus Fabric Data Agent |
-| **Work IQ** | Care-team workflow context such as tumor board, coordinator tasks, PI availability, and referral queue state | Local JSON and markdown files in `data/work/` | Work IQ A2A v1.0 API over M365 |
-| **Web IQ** | Fresh external grounding such as trial registry, labels, and guideline-style evidence | Cached synthetic web snapshots in `data/web/*.json` | Bing-backed Azure AI Search web knowledge base |
-
-## Scenario
-
-> *"Patient with metastatic NSCLC, EGFR exon 20 insertion, prior platinum therapy, ECOG 1, CrCl 48.
-> Open trial mentions renal thresholds and prior-therapy exclusions. Is the patient eligible, and
-> what should the care team do next?"*
-
-The orchestrator decomposes the question, selects the right IQ sources, retrieves and merges
-evidence, surfaces missing or uncertain data, and produces a research assessment routed to a human
-reviewer with a transparent retrieval and evidence trail.
-
-## Integration truthfulness matrix
-
-| Provider | Connected/live implementation | Mock/local fallback | Auth for live path | Repository default | Billable when connected | Key limitation |
-|---|---|---|---|---|---|---|
-| Foundry IQ | Azure AI Search knowledge base (`FOUNDRY_KB_NAME`) via `knowledge_base_retrieve` | `data/foundry_docs/*.md` with citations served through `/api/evidence/doc` | `DefaultAzureCredential` to `search.azure.com` (`Search Index Data Reader`) | `scripts/dev.ps1` keeps the live path off and uses the mock corpus | Yes - Search units + model inference | API version `2026-05-01-preview`; live blob citations are rewritten to `/api/evidence/doc` |
-| Fabric IQ | Fabric Data Agent MCP endpoint | `data/fabric/*.csv` | `DefaultAzureCredential` to `api.fabric.microsoft.com`; delegated only, no service principal | `scripts/dev.ps1` keeps the live path off and uses local CSV fixtures | Yes - F64 capacity charges | Fabric capacity must be Active (`CapacityNotActive` if paused); delegated auth required |
-| Work IQ | `https://workiq.svc.cloud.microsoft/a2a/` with A2A v1.0 JSON-RPC | `data/work/` JSON and markdown fixtures | MSAL OBO with PFX certificate from Azure Key Vault; user delegation required | `scripts/dev.ps1` keeps the live path off and uses local workflow fixtures | Yes - Work IQ API calls | Requires seeded M365 tenant and authenticated user; no anonymous mode; no task creation occurs |
-| Web IQ | Bing-backed Azure AI Search web knowledge base (`WEB_KB_NAME`) | `data/web/*.json` with enforced `synthetic: true` | Same as Foundry IQ | `scripts/dev.ps1` keeps the live path off and uses cached synthetic web snapshots | Yes - Bing queries + inference | **Web IQ product is limited-access, not GA**; this repository uses a Bing-backed web knowledge source instead (see [`docs/adr/0001-architecture.md`](docs/adr/0001-architecture.md)) |
-| AI Search | Live integration when Foundry or Web live flags are enabled | Local synthetic evidence and rewritten citations when running mock/local paths | `DefaultAzureCredential` to `search.azure.com` | Off unless a live provider flag is enabled manually | Yes | Preview API; cited blob URLs are private before rewrite |
-| Model inference | Foundry Agent Service (Responses API) enriches the grounded answer when `USE_LIVE_AGENT=true` | Deterministic rule-based composition | `DefaultAzureCredential` with `PROJECT_ENDPOINT` and `AGENT_NAME` | `scripts/dev.ps1` keeps live model enrichment off | Yes - token consumption | One blocking Responses API round trip; grounded adapters remain the citation source |
-| Task creation | Not implemented | Drafted task only in the response payload | N/A | Always drafted, never submitted | No | `taskStatus: 'Drafted (not submitted)'` in every response; no M365 task, Planner, or Work IQ write occurs |
-| Human review | Not implemented | Structured output only with owner, role, and reason fields | N/A | Always returned as metadata only | No | `humanReview` carries owner/role/reason; no message or notification is sent automatically |
-| Citations | Live AI Search references are rewritten to `/api/evidence/doc` | Local files from `data/foundry_docs/` and `data/work/` are served through the same route | `/api/evidence/doc` is public, allowlisted, and traversal-guarded | Always returned | No | Live Foundry blob URLs are firewalled; the adapter rewrites them to local documentation URLs |
-| External web retrieval | Bing-backed knowledge base when the live Web path is enabled | Cached JSON fixtures such as `data/web/clinicaltrials_NCT99004324.json` | Same as AI Search | `scripts/dev.ps1` keeps the live path off and uses synthetic cached content | Yes when connected | Mock data enforces `synthetic: true`; live content comes from the web |
-
-## Prerequisites
-
-| Tool | Required for | Minimum version |
-|---|---|---|
-| Python | Backend | 3.12 |
-| Node.js | Frontend | 22 |
-| npm | Frontend | bundled with Node 22 |
-| PowerShell | `scripts/dev.ps1` launcher | 7+ (or Windows PowerShell 5.1) |
-| Azure CLI (`az`) | Live provisioning only | latest |
-| Azure Developer CLI (`azd`) | Cloud deployment only | latest |
-
-No Azure account is needed for the local mock walkthrough.
-
-## Run the proof of concept locally (no cloud)
-
-The repository runs fully offline in **deterministic mock mode** against the synthetic `data/`
-package with no Azure dependency and no live auth. One command:
+Prerequisites: Python 3.12+, Node.js 22+, npm, and PowerShell.
 
 ```powershell
-./scripts/dev.ps1
+.\scripts\dev.ps1
 ```
 
-This starts the FastAPI backend on `http://localhost:8000` and the Vite dev server on
-`http://localhost:5173`. Open the UI and click **Ask** on the pre-filled oncology question.
+Open `http://localhost:5173`. The launcher forces every connected-provider flag off, requires no
+Azure account, and does not modify Microsoft 365.
 
-Manual alternative:
+Manual validation:
 
 ```powershell
-# Backend
-python -m venv .venv; .\.venv\Scripts\python -m pip install -r services/api/requirements.lock.txt
-$env:APP_ENVIRONMENT="development"
-$env:USE_LIVE_FOUNDRY=$env:USE_LIVE_FABRIC=$env:USE_LIVE_WORK="false"
-$env:USE_LIVE_WEB=$env:USE_LIVE_AGENT=$env:USE_LIVE_SPECIALISTS="false"
-Push-Location services/api
-..\..\.venv\Scripts\python -m uvicorn app.main:app --port 8000
+.\.venv\Scripts\python tools\validate_isv_consistency.py
+
+Push-Location services\api
+..\..\.venv\Scripts\python -m pytest
 Pop-Location
 
-# Frontend (new terminal)
-cd apps/web; npm ci; npm run dev
+npm --prefix apps\web test -- --run
+npm --prefix apps\web run lint
+npm --prefix apps\web run build
 ```
 
-Validate data and run tests:
+## Connected providers
 
-```powershell
-.\.venv\Scripts\python tools/validate_consistency.py     # synthetic data consistency
-cd services/api; ..\..\.venv\Scripts\python -m pytest    # backend tests
-cd apps/web; npm test                                     # frontend tests
-```
+Copy `services/api/.env.example` to a private environment file and supply only the providers you
+intend to enable:
 
-## Data cohort, ontology & multi-agent
-
-Beyond the hero thread, the repository includes a deterministic synthetic **cohort** (25 patients,
-10 trials, 16 Fabric tables) and an **ontology** (typed entities plus relationships) so
-eligibility is a relationship traversal rather than ad hoc SQL. A **multi-agent** specialist team
-(eligibility, renal/labs, genomics, protocol, workflow, evidence) runs in parallel and deepens its
-investigation as it discovers leads, reconciled by a synthesizer/critic against the ontology as
-ground truth.
-
-- Regenerate the cohort (idempotent): `.\.venv\Scripts\python data/fabric/generate.py`
-- The multi-agent team is **off by default**; enable it with `USE_MULTI_AGENT=true`
-  (optionally `AGENT_MAX_DEPTH`, `AGENT_MAX_LEADS`). It drives the UI **Assessment Steps** trace.
-
-Full details are in [`docs/ontology-and-multi-agent.md`](docs/ontology-and-multi-agent.md).
-
-## Connect to live services (optional)
-
-To opt into live services, supply your own subscription, resource groups, service names, workspace,
-and app registrations. The provisioning scripts have no owner-environment defaults:
-
-```powershell
-az login --use-device-code
-Get-Help ./agent/provisioning/live/provision_all.ps1 -Full
-# Invoke it only after supplying every Mandatory parameter.
-```
-
-Then set the required live flags and coordinates from `services/api/.env.example`. `scripts/dev.ps1`
-always forces safe mock mode; use explicit manual backend/frontend processes for connected/live
-testing. Full prerequisites and safeguards are in [`agent/provisioning/live/README.md`](agent/provisioning/live/README.md)
-and each script's `Get-Help` output. See [`docs/deployment.md`](docs/deployment.md) for the full
-deployment guide and teardown steps.
-
-## Cost considerations
-
-All live IQ providers can incur Azure charges. The repository is designed to be cost-safe by
-default: mock mode is free and requires no cloud account. When live providers are enabled:
-
-| Component | Cost driver |
+| Flag | Required coordinates |
 |---|---|
-| Azure AI Search | Search units (provisioned) + agentic-retrieval inference tokens |
-| Foundry Agent Service | Model inference tokens per assessment |
-| Fabric F64 capacity | Per-second charges when Active; **suspend the capacity when not testing** |
-| Work IQ | API call charges (when GA and live); Key Vault reads |
-| Bing-backed web KB | Bing search transactions |
+| `USE_LIVE_ISV_FABRIC` | ISV Fabric workspace and Data Agent IDs |
+| `USE_LIVE_ISV_FOUNDRY` | ISV Azure AI Search endpoint and Foundry knowledge-base name |
+| `USE_LIVE_ISV_WEB` | Native Web IQ API key, or the isolated Search web knowledge base |
+| `USE_LIVE_ISV_WORK` | Work IQ OBO app, delegated user token, and certificate configuration |
 
-**To minimize cost:** use `scripts/dev.ps1` for local walkthroughs (forces mock mode). Suspend the
-Fabric capacity after provisioning (`az fabric capacity suspend`). Set `USE_LIVE_FABRIC=false`
-unless testing the connected Fabric path. Review the teardown steps in
-[`docs/deployment.md`](docs/deployment.md) when done.
+Connected mode requires Microsoft Entra bearer authentication. Work IQ remains delegated and
+read-only. The included M365 seeder is optional and must be run explicitly.
 
-## Security
+## Synthetic data
 
-This proof of concept handles synthetic data only. For the security model, threat boundaries, and
-vulnerability reporting, see [`SECURITY.md`](SECURITY.md) and [`docs/security.md`](docs/security.md).
-In brief:
+`data/isv/registry.yaml` is the canonical detailed-account source. It drives:
 
-- All assessment and cohort routes require a delegated bearer token in non-mock mode.
-- Mock mode is allowed only when `APP_ENVIRONMENT=development` and every live flag is `false`.
-- Work IQ uses MSAL OBO with a Key Vault-backed certificate; no credential is committed to source.
-- `/api/evidence/doc` is public but allowlisted to synthetic `data/foundry_docs/` and `data/work/`
-  files only, with traversal protection.
-- No task creation, no M365 write operations, and no patient data is stored.
+- 15 deterministic Fabric CSV tables;
+- a generation-2 Fabric ontology;
+- the Alder Creek Unified School District and Fabrikam Unified School District assessments;
+- Foundry and Work IQ evidence consistency;
+- specialist and prompt contracts.
 
-## Known limitations
+`data/isv/portfolio.yaml` adds four summary-level accounts for cross-account triage. All names,
+records, amounts, URLs, and workplace artifacts are synthetic.
 
-See [`docs/limitations.md`](docs/limitations.md) for the full list. Key items:
+## Provisioning and deployment
 
-- Web IQ is a Bing-backed Azure AI Search stand-in; the native Web IQ product is limited-access.
-- Fabric and Work IQ require delegated/OBO identity; no service-principal path exists.
-- The hosted Foundry agent is optional; the grounded deterministic path runs without it.
-- Task drafting is output only; no write to M365 or Work IQ occurs.
-- Trial IDs use a synthetic `NCT99xxxxxx` project range; all returned HTTP 404 on
-  ClinicalTrials.gov on 2026-07-25 (recheck immediately before publication).
-- The `2026-05-01-preview` AI Search API version may change.
+`agent/provisioning/isv/` contains isolated provisioning and optional M365 seeding utilities. They
+do not inherit the retired demo's workspace identifiers. Azure application deployment templates
+remain under `infra/`.
+
+Phase 8 will deploy the ISV application and provider resources into a new resource group. The
+existing deployed environment is intentionally untouched.
 
 ## Documentation
 
-| Doc | Purpose |
-|---|---|
-| [`docs/architecture.md`](docs/architecture.md) | Architecture overview and IQ layer decisions |
-| [`docs/backend.md`](docs/backend.md) | FastAPI stack, orchestration lifecycle, endpoints, mock/live, testing |
-| [`docs/frontend.md`](docs/frontend.md) | React/Vite structure, components, state, SSE, rendering |
-| [`docs/data-model.md`](docs/data-model.md) | Fabric Lakehouse schema, ontology, eligibility traversal |
-| [`docs/synthetic-data.md`](docs/synthetic-data.md) | Authorship, generation, reset, safety, fictional ID guarantee |
-| [`docs/configuration.md`](docs/configuration.md) | All environment variables, flag routing matrix, mock gate |
-| [`docs/deployment.md`](docs/deployment.md) | azd/IaC, provisioning scripts, teardown, cost warnings |
-| [`docs/security.md`](docs/security.md) | Auth boundaries, threat model, prompt injection, citation trust |
-| [`docs/troubleshooting.md`](docs/troubleshooting.md) | Common failures and fixes |
-| [`docs/limitations.md`](docs/limitations.md) | Explicit scope and known limitations |
-| [`docs/ontology-and-multi-agent.md`](docs/ontology-and-multi-agent.md) | Synthetic cohort, ontology + traversal, multi-agent specialist team |
-| [`docs/api-contract.md`](docs/api-contract.md) | Backend and frontend integration contract |
-| [`docs/adr/0001-architecture.md`](docs/adr/0001-architecture.md) | Architecture decision record |
-| [`docs/adr/0002-work-iq-authentication.md`](docs/adr/0002-work-iq-authentication.md) | Delegated Work IQ authentication boundary |
-| [`docs/naming-conventions.md`](docs/naming-conventions.md) | Naming, tagging, and consistency standard |
-| [`data/registry/README.md`](data/registry/README.md) | Canonical synthetic entity registry |
-
-## Repository layout
-
-| Path | Contents |
-|---|---|
-| `agent/` | Hosted Foundry agent instructions and live provisioning scripts |
-| `services/api/` | Python FastAPI backend (orchestrator, IQ adapters, streaming, auth) |
-| `apps/web/` | React, Vite, TypeScript research UI |
-| `data/` | Synthetic data package; `data/registry/` is the canonical synthetic entity registry |
-| `infra/` | azd and Bicep IaC for the live Azure-hosted application |
-| `docs/` | Public architecture, API contract, ADRs, and conventions |
-| `tools/` | Synthetic data consistency validator |
-| `scripts/` | Local dev launcher (`dev.ps1`) and probes |
+- [`docs/architecture.md`](docs/architecture.md)
+- [`docs/configuration.md`](docs/configuration.md)
+- [`docs/data-model.md`](docs/data-model.md)
+- [`docs/security.md`](docs/security.md)
+- [`docs/deployment.md`](docs/deployment.md)
+- [`docs/phase-7.md`](docs/phase-7.md)
 
 ## License
 
-Licensed under the [MIT License](LICENSE). Dependency and service terms remain governed by their
-respective upstream licenses and agreements.
-
-## Status
-
-The repository leads with the connected/live Microsoft IQ architecture. Its safe local default runs
-without cloud credentials by using deterministic synthetic fallbacks. Connected Foundry, Fabric,
-Web, and Work IQ integrations require operator-provided Azure and Microsoft 365 resources. No
-private deployment coordinates or live-environment status are included in this repository.
+Licensed under the [MIT License](LICENSE).

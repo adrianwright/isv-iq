@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "isv.work.v1",
+  "synthetic": true,
+  "accountId": "ACC-1001",
+  "renewalId": "REN-1001",
+  "commitments": [
+    {
+      "id": "COM-1001",
+      "owner": "Jordan Lee",
+      "dueDate": "2026-10-13",
+      "status": "completed",
+      "text": "Deliver a three-year renewal proposal with price protection."
+    },
+    {
+      "id": "COM-1002",
+      "owner": "Riley Nguyen",
+      "dueDate": "2026-10-10",
+      "status": "completed",
+      "text": "Confirm the committed roadmap date for analytics resiliency improvements."
+    },
+    {
+      "id": "COM-1003",
+      "owner": "Casey Williams",
+      "dueDate": "2026-10-08",
+      "status": "completed",
+      "text": "Provide an incident recovery summary and service-credit recommendation."
+    }
+  ]
+}

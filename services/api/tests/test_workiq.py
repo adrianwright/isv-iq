@@ -14,6 +14,7 @@ from app.workiq import (
     WorkIQRequestError,
     WorkIQTokenExchangeError,
     _extract_attributions,
+    _markdown_attributions,
     ask_with_access_token,
 )
 
@@ -58,8 +59,8 @@ def test_work_iq_success_parses_a2a_task_and_sends_required_headers() -> None:
                                     "attributions": [
                                         {
                                             "attributionType": "Citation",
-                                            "providerDisplayName": "Tumor board summary",
-                                            "seeMoreWebUrl": "https://contoso.sharepoint.com/tumor-board",
+                                            "providerDisplayName": "Renewal huddle summary",
+                                            "seeMoreWebUrl": "https://contoso.sharepoint.com/renewal-huddle",
                                         },
                                         {
                                             "attributionType": "Annotation",
@@ -78,7 +79,7 @@ def test_work_iq_success_parses_a2a_task_and_sends_required_headers() -> None:
                         "artifacts": [
                             {
                                 "artifactId": "answer-1",
-                                "parts": [{"text": "Coordinator Dana owns the repeat lab task."}],
+                                "parts": [{"text": "Coordinator Dana owns the renewal forecast task."}],
                             }
                         ],
                     }
@@ -93,13 +94,13 @@ def test_work_iq_success_parses_a2a_task_and_sends_required_headers() -> None:
         http_client=http_client,
     ).ask(user_assertion="incoming-token", question="Find the owner")
 
-    assert answer.text == "Coordinator Dana owns the repeat lab task."
+    assert answer.text == "Coordinator Dana owns the renewal forecast task."
     assert answer.task_id == "task-1"
     assert answer.context_id == "context-1"
     assert answer.attributions == (
         WorkIQAttribution(
-            title="Tumor board summary",
-            url="https://contoso.sharepoint.com/tumor-board",
+            title="Renewal huddle summary",
+            url="https://contoso.sharepoint.com/renewal-huddle",
         ),
         WorkIQAttribution(
             title="Dana",
@@ -107,99 +108,6 @@ def test_work_iq_success_parses_a2a_task_and_sends_required_headers() -> None:
             attribution_type="annotation",
         ),
     )
-
-
-def test_live_work_iq_maps_attributions_to_clickable_evidence(monkeypatch) -> None:
-    from app.schemas import Source
-    from app.sources.base import QueryContext
-    from app.sources.work import LiveWorkIQ
-
-    class StubClient:
-        def ask(self, *, user_assertion: str, question: str) -> WorkIQAnswer:
-            assert user_assertion == "incoming-token"
-            assert "PT-1042" in question
-            assert "Who owns the next step?" in question
-            assert "discrete open tasks" in question
-            return WorkIQAnswer(
-                text="Dana owns the repeat lab task.",
-                task_id="task-1",
-                context_id="context-1",
-                duration_ms=25,
-                attributions=(
-                    WorkIQAttribution(
-                        title="Coordinator handoff",
-                        url="https://contoso.sharepoint.com/coordinator-handoff",
-                    ),
-                    WorkIQAttribution(
-                        title="Tumor board chat",
-                        url="https://teams.microsoft.com/l/message/thread",
-                        attribution_type="annotation",
-                    ),
-                ),
-            )
-
-    source = LiveWorkIQ(_settings())
-    monkeypatch.setattr(source, "client", StubClient())
-    result = source.query(
-        QueryContext(
-            question="Who owns the next step?",
-            patient_id="PT-1042",
-            trial_id="NCT99004324",
-            registry={},
-            user_access_token="incoming-token",
-        )
-    )
-
-    assert result.source == Source.WORK
-    assert [citation.refId for citation in result.citations] == ["r4", "r4-2"]
-    assert [citation.url for citation in result.citations] == [
-        "https://contoso.sharepoint.com/coordinator-handoff",
-        "https://teams.microsoft.com/l/message/thread",
-    ]
-    assert [citation.sourceType for citation in result.citations] == [
-        "work_iq_citation",
-        "work_iq_annotation",
-    ]
-    assert result.facts["work_iq_attribution_count"] == 2
-    assert result.status == "complete"
-    assert result.evidence_count == 2
-    assert result.evidence_noun == "sources"
-
-
-def test_live_work_iq_surfaces_response_evidence_without_attribution(monkeypatch) -> None:
-    from app.sources.base import QueryContext
-    from app.sources.work import LiveWorkIQ
-
-    class StubClient:
-        def ask(self, *, user_assertion: str, question: str) -> WorkIQAnswer:
-            assert user_assertion == "incoming-token"
-            assert "prefer citations over annotations" in question
-            return WorkIQAnswer(
-                text="Dana owns the repeat lab task.",
-                task_id="task-1",
-                context_id="context-1",
-                duration_ms=25,
-            )
-
-    source = LiveWorkIQ(_settings())
-    monkeypatch.setattr(source, "client", StubClient())
-    result = source.query(
-        QueryContext(
-            question="Who owns the next step?",
-            patient_id="PT-1042",
-            trial_id="NCT99004324",
-            registry={},
-            user_access_token="incoming-token",
-        )
-    )
-
-    assert result.status == "complete"
-    assert result.evidence_count == 1
-    assert result.evidence_noun == "sources"
-    assert len(result.citations) == 1
-    assert result.citations[0].title == "Work IQ response (no source attribution returned)"
-    assert result.citations[0].url is None
-    assert result.citations[0].sourceType == "work_iq_response"
 
 
 def test_work_iq_finds_nested_and_url_less_citations() -> None:
@@ -219,7 +127,7 @@ def test_work_iq_finds_nested_and_url_less_citations() -> None:
                                         },
                                         {
                                             "attributionType": "Citation",
-                                            "providerDisplayName": "Tumor board summary",
+                                            "providerDisplayName": "Renewal huddle summary",
                                             "seeMoreWebUrl": "https://contoso.sharepoint.com/summary",
                                         },
                                     ]
@@ -237,12 +145,50 @@ def test_work_iq_finds_nested_and_url_less_citations() -> None:
     assert attributions == (
         WorkIQAttribution(title="Coordinator task", url=None),
         WorkIQAttribution(
-            title="Tumor board summary",
+            title="Renewal huddle summary",
             url="https://contoso.sharepoint.com/summary",
         ),
     )
     assert diagnostics.candidate_count == 2
     assert diagnostics.accepted_count == 2
+
+
+def test_work_iq_extracts_grounded_markdown_links() -> None:
+    text = (
+        "[Renewal QBR](https://outlook.office365.com/owa/?ItemID=mail-1) "
+        "[Microsoft Administrator](https://www.office.com/search?q=admin) "
+        "[Recovery review](https://teams.microsoft.com/l/meeting/details?eventId=event-1) "
+        "[1](https://outlook.office365.com/owa/?ItemID=mail-1#citation)"
+    )
+
+    assert _markdown_attributions(text) == (
+        WorkIQAttribution(
+            title="Renewal QBR",
+            url="https://outlook.office365.com/owa/?ItemID=mail-1",
+        ),
+        WorkIQAttribution(
+            title="Recovery review",
+            url="https://teams.microsoft.com/l/meeting/details?eventId=event-1",
+        ),
+    )
+
+
+def test_work_iq_extracts_unique_numbered_markdown_citations() -> None:
+    text = (
+        "[1](https://outlook.office365.com/owa/?ItemID=mail-1) "
+        "[2](https://teams.microsoft.com/l/message/chat-1/message-1)"
+    )
+
+    assert _markdown_attributions(text) == (
+        WorkIQAttribution(
+            title="Work IQ citation 1",
+            url="https://outlook.office365.com/owa/?ItemID=mail-1",
+        ),
+        WorkIQAttribution(
+            title="Work IQ citation 2",
+            url="https://teams.microsoft.com/l/message/chat-1/message-1",
+        ),
+    )
 
 
 def test_work_iq_parses_reference_data_parts_and_logs_only_shape(caplog) -> None:
@@ -303,31 +249,6 @@ def test_work_iq_parses_reference_data_parts_and_logs_only_shape(caplog) -> None
     )
     assert "candidates=1 accepted=1 types=reference=1 reference_parts=1 invalid_urls=0" in caplog.text
     assert "contoso.sharepoint.com" not in caplog.text
-
-
-def test_live_work_iq_flag_selects_live_source_without_enabling_other_sources() -> None:
-    from app.sources.fabric import MockFabricIQ
-    from app.sources.factory import create_sources
-    from app.sources.foundry import MockFoundryIQ
-    from app.sources.web import MockWebIQ
-    from app.sources.work import LiveWorkIQ
-
-    sources = create_sources(
-        Settings(
-            _env_file=None,
-            USE_LIVE_FOUNDRY=False,
-            USE_LIVE_FABRIC=False,
-            USE_LIVE_WORK=True,
-            USE_LIVE_WEB=False,
-        )
-    )
-
-    assert [type(source) for source in sources] == [
-        MockFoundryIQ,
-        MockFabricIQ,
-        LiveWorkIQ,
-        MockWebIQ,
-    ]
 
 
 def test_work_iq_surfaces_obo_failure() -> None:

@@ -1,0 +1,5 @@
+id,account_id,amount,currency,due_date,status,days_overdue
+INV-1001,ACC-1001,600000,USD,2026-09-30,paid,0
+INV-1002,ACC-1001,600000,USD,2026-06-30,paid,0
+INV-2001,ACC-1002,450000,USD,2026-09-30,paid,0
+INV-2002,ACC-1002,450000,USD,2026-06-30,paid,0

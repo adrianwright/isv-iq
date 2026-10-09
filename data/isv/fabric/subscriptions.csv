@@ -1,0 +1,7 @@
+id,account_id,product,annual_value,licensed_units,status
+SUB-1001,ACC-1001,Core Platform,1400000,12000,active
+SUB-1002,ACC-1001,Analytics,700000,4500,active
+SUB-1003,ACC-1001,Premium Support,300000,1,active
+SUB-2001,ACC-1002,Core Platform,1050000,7600,active
+SUB-2002,ACC-1002,Analytics,500000,2800,active
+SUB-2003,ACC-1002,Premium Support,250000,1,active

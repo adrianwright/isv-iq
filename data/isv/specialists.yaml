@@ -1,0 +1,25 @@
+meta:
+  schema_version: isv.specialists.v1
+  disclaimer: "Synthetic demo specialists. Findings require human review."
+
+specialists:
+  - id: commercial
+    label: Commercial Strategist
+    domain: Renewal economics, terms, forecast, invoice exposure, and proposal approvals
+    signal_category: commercial
+  - id: adoption
+    label: Adoption Analyst
+    domain: Product usage, realized value, success milestones, and recovery targets
+    signal_category: adoption
+  - id: support
+    label: Support Recovery Lead
+    domain: Priority incidents, SLA exposure, remediation confidence, and customer recovery
+    signal_category: support
+  - id: relationship
+    label: Relationship Strategist
+    domain: Stakeholder influence, sentiment, commitments, and executive alignment
+    signal_category: relationship
+  - id: expansion
+    label: Expansion Architect
+    domain: Product fit, customer strategy, technical capacity, competition, and qualification
+    signal_category: expansion

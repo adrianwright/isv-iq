@@ -1,0 +1,552 @@
+meta:
+  schema_version: 1
+  scenario_today: "2026-10-06"
+  scenario: customer-renewal-and-expansion
+  hero_account_id: ACC-1001
+  hero_renewal_id: REN-1001
+  disclaimer: "Synthetic demo data only. Not a production forecast or system of record."
+
+accounts:
+  - id: ACC-1001
+    name: Alder Creek Unified School District
+    industry: Education
+    segment: Strategic
+    region: North America
+    health: at_risk
+    annual_recurring_revenue: 2400000
+    currency: USD
+    customer_since: "2022-01-15"
+    employee_count: 12800
+    primary_contact_id: CON-1001
+    executive_sponsor_id: EMP-1004
+  - id: ACC-1002
+    name: Fabrikam Unified School District
+    industry: Education
+    segment: Enterprise
+    region: North America
+    health: healthy
+    annual_recurring_revenue: 1800000
+    currency: USD
+    customer_since: "2021-04-01"
+    employee_count: 9200
+    primary_contact_id: CON-2001
+    executive_sponsor_id: EMP-2004
+
+contacts:
+  - id: CON-1001
+    account_id: ACC-1001
+    display_name: Maya Chen
+    title: Chief Information Officer
+    role: executive_buyer
+    influence: high
+    sentiment: concerned
+  - id: CON-1002
+    account_id: ACC-1001
+    display_name: Daniel Ortiz
+    title: Deputy Superintendent, Operations
+    role: champion
+    influence: high
+    sentiment: supportive
+  - id: CON-1003
+    account_id: ACC-1001
+    display_name: Aisha Rahman
+    title: Director, Technology Services
+    role: operational_stakeholder
+    influence: medium
+    sentiment: frustrated
+  - id: CON-2001
+    account_id: ACC-1002
+    display_name: Elena Torres
+    title: Chief Digital Officer
+    role: executive_buyer
+    influence: high
+    sentiment: supportive
+  - id: CON-2002
+    account_id: ACC-1002
+    display_name: Marcus Reed
+    title: Deputy Superintendent, Operations
+    role: champion
+    influence: high
+    sentiment: supportive
+  - id: CON-2003
+    account_id: ACC-1002
+    display_name: Nina Park
+    title: Director, Enterprise Architecture
+    role: technical_stakeholder
+    influence: high
+    sentiment: positive
+
+employees:
+  - id: EMP-1001
+    display_name: Jordan Lee
+    title: Strategic Account Executive
+    skills: [commercial_strategy, executive_relationships]
+    availability: available
+  - id: EMP-1002
+    display_name: Morgan Patel
+    title: Customer Success Manager
+    skills: [adoption, success_planning]
+    availability: available
+  - id: EMP-1003
+    display_name: Riley Nguyen
+    title: Principal Solution Architect
+    skills: [ai_automation, integration_architecture]
+    availability: constrained
+  - id: EMP-1004
+    display_name: Alex Johnson
+    title: Executive Sponsor
+    skills: [executive_alignment]
+    availability: available
+  - id: EMP-1005
+    display_name: Casey Williams
+    title: Support Escalation Manager
+    skills: [incident_management, service_recovery]
+    availability: available
+  - id: EMP-2001
+    display_name: Sam Rivera
+    title: Enterprise Account Executive
+    skills: [commercial_strategy, education_industry]
+    availability: available
+  - id: EMP-2002
+    display_name: Priya Shah
+    title: Customer Success Manager
+    skills: [adoption, value_realization]
+    availability: available
+  - id: EMP-2003
+    display_name: Taylor Brooks
+    title: Principal Solution Architect
+    skills: [ai_automation, education_architecture]
+    availability: available
+  - id: EMP-2004
+    display_name: Avery Morgan
+    title: Executive Sponsor
+    skills: [executive_alignment, education_strategy]
+    availability: available
+  - id: EMP-2005
+    display_name: Drew Kim
+    title: Support Success Manager
+    skills: [service_health, incident_prevention]
+    availability: available
+
+account_team:
+  - id: TEAM-1001
+    account_id: ACC-1001
+    employee_id: EMP-1001
+    role: account_executive
+    allocation_percent: 50
+  - id: TEAM-1002
+    account_id: ACC-1001
+    employee_id: EMP-1002
+    role: customer_success_manager
+    allocation_percent: 40
+  - id: TEAM-1003
+    account_id: ACC-1001
+    employee_id: EMP-1003
+    role: solution_architect
+    allocation_percent: 10
+  - id: TEAM-1004
+    account_id: ACC-1001
+    employee_id: EMP-1004
+    role: executive_sponsor
+    allocation_percent: 5
+  - id: TEAM-1005
+    account_id: ACC-1001
+    employee_id: EMP-1005
+    role: support_escalation_manager
+    allocation_percent: 15
+  - id: TEAM-2001
+    account_id: ACC-1002
+    employee_id: EMP-2001
+    role: account_executive
+    allocation_percent: 45
+  - id: TEAM-2002
+    account_id: ACC-1002
+    employee_id: EMP-2002
+    role: customer_success_manager
+    allocation_percent: 35
+  - id: TEAM-2003
+    account_id: ACC-1002
+    employee_id: EMP-2003
+    role: solution_architect
+    allocation_percent: 25
+  - id: TEAM-2004
+    account_id: ACC-1002
+    employee_id: EMP-2004
+    role: executive_sponsor
+    allocation_percent: 10
+  - id: TEAM-2005
+    account_id: ACC-1002
+    employee_id: EMP-2005
+    role: support_escalation_manager
+    allocation_percent: 10
+
+renewals:
+  - id: REN-1001
+    account_id: ACC-1001
+    renewal_date: "2026-12-20"
+    days_to_renewal: 75
+    current_arr: 2400000
+    forecast_arr: 2200000
+    currency: USD
+    stage: evaluation
+    forecast_category: at_risk
+    owner_id: EMP-1001
+    requested_term_months: 36
+    requested_proposal_due: "2026-10-13"
+  - id: REN-1002
+    account_id: ACC-1002
+    renewal_date: "2027-02-03"
+    days_to_renewal: 120
+    current_arr: 1800000
+    forecast_arr: 1875000
+    currency: USD
+    stage: negotiation
+    forecast_category: commit
+    owner_id: EMP-2001
+    requested_term_months: 36
+    requested_proposal_due: "2026-10-20"
+
+contracts:
+  - id: CTR-1001
+    account_id: ACC-1001
+    renewal_id: REN-1001
+    start_date: "2024-12-20"
+    end_date: "2026-12-20"
+    notice_date: "2026-10-21"
+    support_tier: premium
+    uptime_sla_percent: 99.9
+    service_credit_eligible: true
+    auto_renew: false
+  - id: CTR-2001
+    account_id: ACC-1002
+    renewal_id: REN-1002
+    start_date: "2024-02-03"
+    end_date: "2027-02-03"
+    notice_date: "2026-11-05"
+    support_tier: premium
+    uptime_sla_percent: 99.95
+    service_credit_eligible: true
+    auto_renew: false
+
+subscriptions:
+  - id: SUB-1001
+    account_id: ACC-1001
+    product: Core Platform
+    annual_value: 1400000
+    licensed_units: 12000
+    status: active
+  - id: SUB-1002
+    account_id: ACC-1001
+    product: Analytics
+    annual_value: 700000
+    licensed_units: 4500
+    status: active
+  - id: SUB-1003
+    account_id: ACC-1001
+    product: Premium Support
+    annual_value: 300000
+    licensed_units: 1
+    status: active
+  - id: SUB-2001
+    account_id: ACC-1002
+    product: Core Platform
+    annual_value: 1050000
+    licensed_units: 7600
+    status: active
+  - id: SUB-2002
+    account_id: ACC-1002
+    product: Analytics
+    annual_value: 500000
+    licensed_units: 2800
+    status: active
+  - id: SUB-2003
+    account_id: ACC-1002
+    product: Premium Support
+    annual_value: 250000
+    licensed_units: 1
+    status: active
+
+product_usage:
+  - id: USE-1001
+    account_id: ACC-1001
+    subscription_id: SUB-1001
+    period: "2026-09"
+    active_users: 9870
+    licensed_users: 12000
+    adoption_percent: 82.3
+    trend_percent: -1.2
+  - id: USE-1002
+    account_id: ACC-1001
+    subscription_id: SUB-1002
+    period: "2026-09"
+    active_users: 2385
+    licensed_users: 4500
+    adoption_percent: 53.0
+    trend_percent: -14.0
+  - id: USE-2001
+    account_id: ACC-1002
+    subscription_id: SUB-2001
+    period: "2026-09"
+    active_users: 6840
+    licensed_users: 7600
+    adoption_percent: 90.0
+    trend_percent: 6.0
+  - id: USE-2002
+    account_id: ACC-1002
+    subscription_id: SUB-2002
+    period: "2026-09"
+    active_users: 2464
+    licensed_users: 2800
+    adoption_percent: 88.0
+    trend_percent: 12.0
+
+support_cases:
+  - id: CASE-1001
+    account_id: ACC-1001
+    product: Analytics
+    priority: P1
+    status: engineering_investigation
+    opened_at: "2026-09-12"
+    sla_breached: true
+    sentiment: frustrated
+    owner_id: EMP-1005
+    summary: Intermittent analytics refresh failures affect executive dashboards.
+  - id: CASE-1002
+    account_id: ACC-1001
+    product: Core Platform
+    priority: P1
+    status: mitigation_provided
+    opened_at: "2026-09-24"
+    sla_breached: false
+    sentiment: concerned
+    owner_id: EMP-1005
+    summary: Identity synchronization delays affect new employee onboarding.
+  - id: CASE-1003
+    account_id: ACC-1001
+    product: Analytics
+    priority: P2
+    status: resolved
+    opened_at: "2026-08-05"
+    sla_breached: false
+    sentiment: neutral
+    owner_id: EMP-1005
+    summary: Export formatting issue resolved in the September service update.
+  - id: CASE-2001
+    account_id: ACC-1002
+    product: Core Platform
+    priority: P2
+    status: resolved
+    opened_at: "2026-08-18"
+    sla_breached: false
+    sentiment: positive
+    owner_id: EMP-2005
+    summary: School identity synchronization issue was resolved within SLA.
+
+invoices:
+  - id: INV-1001
+    account_id: ACC-1001
+    amount: 600000
+    currency: USD
+    due_date: "2026-09-30"
+    status: paid
+    days_overdue: 0
+  - id: INV-1002
+    account_id: ACC-1001
+    amount: 600000
+    currency: USD
+    due_date: "2026-06-30"
+    status: paid
+    days_overdue: 0
+  - id: INV-2001
+    account_id: ACC-1002
+    amount: 450000
+    currency: USD
+    due_date: "2026-09-30"
+    status: paid
+    days_overdue: 0
+  - id: INV-2002
+    account_id: ACC-1002
+    amount: 450000
+    currency: USD
+    due_date: "2026-06-30"
+    status: paid
+    days_overdue: 0
+
+success_milestones:
+  - id: MIL-1001
+    account_id: ACC-1001
+    name: Analytics executive dashboard rollout
+    owner_id: EMP-1002
+    due_date: "2026-09-15"
+    status: blocked
+    blocker: CASE-1001
+  - id: MIL-1002
+    account_id: ACC-1001
+    name: AI Automation value workshop
+    owner_id: EMP-1003
+    due_date: "2026-10-18"
+    status: not_started
+    blocker: specialist_capacity
+  - id: MIL-2001
+    account_id: ACC-1002
+    name: School operations analytics rollout
+    owner_id: EMP-2002
+    due_date: "2026-09-25"
+    status: completed
+    blocker: none
+  - id: MIL-2002
+    account_id: ACC-1002
+    name: AI Automation architecture validation
+    owner_id: EMP-2003
+    due_date: "2026-10-15"
+    status: completed
+    blocker: none
+
+commitments:
+  - id: COM-1001
+    account_id: ACC-1001
+    renewal_id: REN-1001
+    owner_id: EMP-1001
+    source: qbr_meeting
+    due_date: "2026-10-13"
+    status: completed
+    text: Deliver a three-year renewal proposal with price protection.
+  - id: COM-1002
+    account_id: ACC-1001
+    renewal_id: REN-1001
+    owner_id: EMP-1003
+    source: customer_email
+    due_date: "2026-10-10"
+    status: completed
+    text: Confirm the committed roadmap date for analytics resiliency improvements.
+  - id: COM-1003
+    account_id: ACC-1001
+    renewal_id: REN-1001
+    owner_id: EMP-1005
+    source: escalation_call
+    due_date: "2026-10-08"
+    status: completed
+    text: Provide an incident recovery summary and service-credit recommendation.
+  - id: COM-2001
+    account_id: ACC-1002
+    renewal_id: REN-1002
+    owner_id: EMP-2001
+    source: executive_meeting
+    due_date: "2026-10-12"
+    status: completed
+    text: Confirm commercial sponsorship for the automation expansion.
+  - id: COM-2002
+    account_id: ACC-1002
+    renewal_id: REN-1002
+    owner_id: EMP-2003
+    source: architecture_review
+    due_date: "2026-10-15"
+    status: completed
+    text: Validate security, integration, capacity, and measurable value criteria.
+
+expansion_candidates:
+  - id: EXP-1001
+    account_id: ACC-1001
+    renewal_id: REN-1001
+    product: AI Automation
+    estimated_arr: 450000
+    currency: USD
+    fit: strong
+    confidence: medium
+    sponsor_contact_id: CON-1002
+    technical_owner_id: EMP-1003
+    rationale: Customer is funding workflow automation and requested an architecture workshop.
+    blocker: Solution architect capacity and unresolved support confidence.
+  - id: EXP-2001
+    account_id: ACC-1002
+    renewal_id: REN-1002
+    product: AI Automation
+    estimated_arr: 300000
+    currency: USD
+    fit: strong
+    confidence: high
+    sponsor_contact_id: CON-2001
+    technical_owner_id: EMP-2003
+    rationale: Executive sponsorship, strong adoption, and completed architecture validation support expansion.
+    blocker: none
+
+interactions:
+  - id: INT-1001
+    account_id: ACC-1001
+    occurred_at: "2026-09-29"
+    type: qbr_meeting
+    participants: [CON-1001, CON-1002, EMP-1001, EMP-1002]
+    sentiment: mixed
+    summary: District leaders requested a three-year proposal; the approval package is complete while support reliability remains a forecast concern.
+  - id: INT-1002
+    account_id: ACC-1001
+    occurred_at: "2026-10-02"
+    type: customer_email
+    participants: [CON-1003, EMP-1002, EMP-1005]
+    sentiment: negative
+    summary: The district accepted the incident recovery package and committed Analytics roadmap date, but requested continued operational reporting.
+  - id: INT-1003
+    account_id: ACC-1001
+    occurred_at: "2026-10-05"
+    type: internal_teams
+    participants: [EMP-1001, EMP-1002, EMP-1003, EMP-1005]
+    sentiment: concerned
+    summary: Team approved the proposal for release while keeping the full-value forecast gated on adoption recovery and executive response.
+  - id: INT-2001
+    account_id: ACC-1002
+    occurred_at: "2026-09-28"
+    type: executive_meeting
+    participants: [CON-2001, CON-2002, EMP-2001, EMP-2004]
+    sentiment: positive
+    summary: Fabrikam approved the automation business case and requested an accelerated rollout plan.
+  - id: INT-2002
+    account_id: ACC-1002
+    occurred_at: "2026-10-03"
+    type: architecture_review
+    participants: [CON-2003, EMP-2002, EMP-2003]
+    sentiment: positive
+    summary: Architecture, security, integration, and value criteria passed with capacity reserved.
+
+external_signals:
+  - id: EXT-1001
+    account_id: ACC-1001
+    occurred_at: "2026-09-18"
+    category: leadership_change
+    title: Alder Creek Unified School District appoints Maya Chen as CIO
+    impact: The new district technology executive is reviewing strategic platform value.
+    source_url: "https://alder-creek-usd.example.invalid/news/new-cio"
+  - id: EXT-1002
+    account_id: ACC-1001
+    occurred_at: "2026-09-26"
+    category: strategic_investment
+    title: Alder Creek Unified School District announces responsible AI initiative
+    impact: The district strategy supports administrative workflow automation and staff productivity.
+    source_url: "https://alder-creek-usd.example.invalid/news/responsible-ai"
+  - id: EXT-1003
+    account_id: ACC-1001
+    occurred_at: "2026-10-01"
+    category: competitor
+    title: Education technology vendors expand K-12 workflow automation offerings
+    impact: Competitive pressure increases urgency for a differentiated education-sector expansion plan.
+    source_url: "https://education-market.example.invalid/news/k12-workflow-automation"
+  - id: EXT-2001
+    account_id: ACC-1002
+    occurred_at: "2026-09-20"
+    category: strategic_investment
+    title: Fabrikam Unified School District expands intelligent school operations program
+    impact: Public strategy aligns with AI Automation across school operations.
+    source_url: "https://fabrikam-usd.example.invalid/news/intelligent-operations"
+  - id: EXT-2002
+    account_id: ACC-1002
+    occurred_at: "2026-09-27"
+    category: growth
+    title: Fabrikam Unified School District announces new school openings
+    impact: Growth increases the value of standardized automated workflows.
+    source_url: "https://fabrikam-usd.example.invalid/news/school-expansion"
+  - id: EXT-2003
+    account_id: ACC-1002
+    occurred_at: "2026-10-02"
+    category: market
+    title: School districts increase investment in administrative workflow automation
+    impact: Market demand supports timely expansion while Fabrikam has sponsor and architecture readiness.
+    source_url: "https://education-market.example.invalid/news/administrative-automation"

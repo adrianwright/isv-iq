@@ -41,7 +41,7 @@ class _FailingAfterFirstSecretClient(_SecretClient):
 
 def _certificate_secret() -> tuple[str, x509.Certificate]:
     private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    subject = issuer = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "amciq-workiq-obo")])
+    subject = issuer = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "msiq-isv-workiq-obo")])
     now = datetime.now(UTC)
     certificate = (
         x509.CertificateBuilder()
@@ -54,7 +54,7 @@ def _certificate_secret() -> tuple[str, x509.Certificate]:
         .sign(private_key, hashes.SHA256())
     )
     pfx = pkcs12.serialize_key_and_certificates(
-        b"amciq-workiq-obo",
+        b"msiq-isv-workiq-obo",
         private_key,
         certificate,
         None,
@@ -69,7 +69,7 @@ def _production_settings() -> Settings:
         APP_ENVIRONMENT="production",
         AZURE_CLIENT_ID="managed-identity-client",
         WORK_IQ_KEY_VAULT_URL="https://test-key-vault.vault.azure.net/",
-        WORK_IQ_CLIENT_CERTIFICATE_SECRET_NAME="amciq-workiq-obo",
+        WORK_IQ_CLIENT_CERTIFICATE_SECRET_NAME="msiq-isv-workiq-obo",
     )
 
 
@@ -89,7 +89,7 @@ def test_key_vault_provider_converts_pfx_for_msal_and_caches_it() -> None:
     assert first["private_key"].startswith("-----BEGIN PRIVATE KEY-----")
     assert first["public_certificate"].startswith("-----BEGIN CERTIFICATE-----")
     assert first["thumbprint"] == certificate.fingerprint(hashes.SHA1()).hex().upper()
-    assert secret_client.names == ["amciq-workiq-obo"]
+    assert secret_client.names == ["msiq-isv-workiq-obo"]
 
 
 def test_key_vault_provider_refreshes_rotated_certificate_after_cache_ttl() -> None:
@@ -106,7 +106,7 @@ def test_key_vault_provider_refreshes_rotated_certificate_after_cache_ttl() -> N
     assert first["thumbprint"] == first_certificate.fingerprint(hashes.SHA1()).hex().upper()
     assert second["thumbprint"] == second_certificate.fingerprint(hashes.SHA1()).hex().upper()
     assert first["thumbprint"] != second["thumbprint"]
-    assert secret_client.names == ["amciq-workiq-obo", "amciq-workiq-obo"]
+    assert secret_client.names == ["msiq-isv-workiq-obo", "msiq-isv-workiq-obo"]
 
 
 def test_refresh_failure_serves_cached_certificate_with_retry_backoff() -> None:
@@ -123,7 +123,7 @@ def test_refresh_failure_serves_cached_certificate_with_retry_backoff() -> None:
 
     assert stale == cached
     assert during_backoff == cached
-    assert secret_client.names == ["amciq-workiq-obo", "amciq-workiq-obo"]
+    assert secret_client.names == ["msiq-isv-workiq-obo", "msiq-isv-workiq-obo"]
 
 
 def test_key_vault_provider_rejects_invalid_certificate_secret() -> None:
@@ -161,7 +161,7 @@ def test_initial_failure_uses_retry_backoff_instead_of_requerying_key_vault() ->
     with pytest.raises(CertificateCredentialError, match="retry backoff"):
         provider.get_client_credential()
 
-    assert secret_client.names == ["amciq-workiq-obo"]
+    assert secret_client.names == ["msiq-isv-workiq-obo"]
 
 
 def test_production_always_selects_managed_identity_key_vault_provider() -> None:

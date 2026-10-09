@@ -5,8 +5,9 @@ import {
   Moon,
   Settings,
   Sun,
-  User,
+  Building2,
   Workflow,
+  UsersRound,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -18,7 +19,8 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { id: 'assessment', label: 'Overview', Icon: LayoutDashboard },
-  { id: 'patient', label: 'Patient Summary', Icon: User },
+  { id: 'account', label: 'Account Summary', Icon: Building2 },
+  { id: 'specialists', label: 'Specialists', Icon: UsersRound },
   { id: 'evidence', label: 'Evidence', Icon: FileText },
   { id: 'workflow', label: 'Workflow', Icon: Workflow },
   { id: 'sources', label: 'Sources', Icon: Layers },
@@ -43,7 +45,7 @@ export function SideNav({ activeId, darkMode, onToggleDarkMode }: SideNavProps) 
         <span className="brand-mark" aria-hidden="true">
           IQ
         </span>
-        <span className="brand-name">AMC IQ</span>
+        <span className="brand-name">Microsoft IQ for ISVs</span>
       </div>
       <ul className="side-nav-list">
         {navItems.map((item) => (

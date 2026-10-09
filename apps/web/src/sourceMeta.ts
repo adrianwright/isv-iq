@@ -18,17 +18,17 @@ export const sourceIcon: Record<IQSource, LucideIcon> = {
 export const sourceOrder: IQSource[] = ['foundry', 'fabric', 'work', 'web']
 
 export const sourceTagline: Record<IQSource, string> = {
-  foundry: 'Institutional knowledge',
-  fabric: 'Patient and operational data',
-  work: 'Care team and workflow',
-  web: 'External evidence',
+  foundry: 'Business knowledge',
+  fabric: 'Operational account data',
+  work: 'Customer and team activity',
+  web: 'External market context',
 }
 
 export const sourceRetrieving: Record<IQSource, string> = {
-  foundry: 'Protocol criteria, genomics report, pathology, consent policy',
-  fabric: 'Patient registry, CrCl trend, ECOG, treatment history',
-  work: 'Open tasks, coordinator ownership, tumor board context',
-  web: 'External trial registry and biomarker treatment context',
+  foundry: 'Contract terms, support policy, pricing guidance, product roadmap',
+  fabric: 'Renewal, adoption, support, invoices, account ownership',
+  work: 'Customer sentiment, meetings, commitments, account-team decisions',
+  web: 'Leadership changes, company strategy, market and competitor signals',
 }
 
 export function sourceClass(source: IQSource): string {
@@ -48,4 +48,3 @@ export const statusLabels: Record<SourceStatus, string> = {
 export function statusLabel(status: SourceStatus): string {
   return statusLabels[status] ?? status
 }
-

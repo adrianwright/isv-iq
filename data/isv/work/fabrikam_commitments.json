@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "isv.work.v1",
+  "synthetic": true,
+  "accountId": "ACC-1002",
+  "renewalId": "REN-1002",
+  "commitments": [
+    {
+      "id": "COM-2001",
+      "owner": "Sam Rivera",
+      "dueDate": "2026-10-12",
+      "status": "completed",
+      "text": "Confirm commercial sponsorship for the automation expansion."
+    },
+    {
+      "id": "COM-2002",
+      "owner": "Taylor Brooks",
+      "dueDate": "2026-10-15",
+      "status": "completed",
+      "text": "Validate security, integration, capacity, and measurable value criteria."
+    }
+  ]
+}

@@ -1,9 +1,11 @@
 param location string
+param containerAppsLocation string
 param containerAppsEnvironmentName string
 param apiContainerAppName string
 param apiContainerImage string
 param apiContainerPort int
 param staticWebAppName string
+param staticWebAppLocation string
 param containerRegistryName string
 param logAnalyticsCustomerId string
 @secure()
@@ -12,25 +14,17 @@ param appInsightsConnectionString string
 param identityResourceId string
 param identityPrincipalId string
 param identityClientId string
-param searchEndpoint string
-param foundryKbName string
-param webKbName string
-param webIqEndpoint string
+param isvSearchEndpoint string
+param isvFoundryKbName string
+param isvWebKbName string
+param isvWebIqEndpoint string
 @secure()
-param webIqApiKey string
-param projectEndpoint string
-param fabricWorkspaceId string
-param fabricDataAgentId string
+param isvWebIqApiKey string
+param isvFabricWorkspaceId string
+param isvFabricDataAgentId string
 param azureSubscriptionId string
 param fabricCapacityResourceGroup string
 param fabricCapacityName string
-param eligibilityEvaluatorAgentName string
-param specialistEligibilityAgentName string
-param specialistRenalAgentName string
-param specialistGenomicsAgentName string
-param specialistProtocolAgentName string
-param specialistWorkflowAgentName string
-param specialistEvidenceAgentName string
 param tenantId string
 param apiAudience string
 param apiRequiredScope string
@@ -40,8 +34,7 @@ param workIqClientCertificatePfx string
 param workIqClientCertificateSecretName string
 param workIqEndpoint string
 param workIqScope string
-param useLiveWork bool
-param useLiveSpecialists bool
+param useLiveIsvWork bool
 param keyVaultUri string
 param tags object
 
@@ -50,7 +43,7 @@ var acrPullRoleId = subscriptionResourceId('Microsoft.Authorization/roleDefiniti
 
 resource managedEnvironment 'Microsoft.App/managedEnvironments@2024-03-01' = {
   name: containerAppsEnvironmentName
-  location: location
+  location: containerAppsLocation
   tags: tags
   properties: {
     appLogsConfiguration: {
@@ -87,7 +80,7 @@ resource acrPullAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' 
 
 resource web 'Microsoft.Web/staticSites@2023-12-01' = {
   name: staticWebAppName
-  location: location
+  location: staticWebAppLocation
   tags: union(tags, {
     'azd-service-name': 'web'
   })
@@ -103,7 +96,7 @@ resource web 'Microsoft.Web/staticSites@2023-12-01' = {
 
 resource api 'Microsoft.App/containerApps@2024-03-01' = {
   name: apiContainerAppName
-  location: location
+  location: containerAppsLocation
   tags: union(tags, {
     'azd-service-name': 'api'
   })
@@ -131,8 +124,8 @@ resource api 'Microsoft.App/containerApps@2024-03-01' = {
       ]
       secrets: [
         {
-          name: 'web-iq-api-key'
-          value: webIqApiKey
+          name: 'isv-web-iq-api-key'
+          value: isvWebIqApiKey
         }
         {
           name: 'work-iq-client-certificate'
@@ -163,36 +156,32 @@ resource api 'Microsoft.App/containerApps@2024-03-01' = {
               value: identityClientId
             }
             {
-              name: 'SEARCH_ENDPOINT'
-              value: searchEndpoint
+              name: 'ISV_SEARCH_ENDPOINT'
+              value: isvSearchEndpoint
             }
             {
-              name: 'FOUNDRY_KB_NAME'
-              value: foundryKbName
+              name: 'ISV_FOUNDRY_KB_NAME'
+              value: isvFoundryKbName
             }
             {
-              name: 'WEB_KB_NAME'
-              value: webKbName
+              name: 'ISV_WEB_KB_NAME'
+              value: isvWebKbName
             }
             {
-              name: 'WEB_IQ_ENDPOINT'
-              value: webIqEndpoint
+              name: 'ISV_WEB_IQ_ENDPOINT'
+              value: isvWebIqEndpoint
             }
             {
-              name: 'WEB_IQ_API_KEY'
-              secretRef: 'web-iq-api-key'
+              name: 'ISV_WEB_IQ_API_KEY'
+              secretRef: 'isv-web-iq-api-key'
             }
             {
-              name: 'PROJECT_ENDPOINT'
-              value: projectEndpoint
+              name: 'ISV_FABRIC_WORKSPACE_ID'
+              value: isvFabricWorkspaceId
             }
             {
-              name: 'FABRIC_WORKSPACE_ID'
-              value: fabricWorkspaceId
-            }
-            {
-              name: 'FABRIC_DATA_AGENT_ID'
-              value: fabricDataAgentId
+              name: 'ISV_FABRIC_DATA_AGENT_ID'
+              value: isvFabricDataAgentId
             }
             {
               name: 'AZURE_SUBSCRIPTION_ID'
@@ -205,34 +194,6 @@ resource api 'Microsoft.App/containerApps@2024-03-01' = {
             {
               name: 'FABRIC_CAPACITY_NAME'
               value: fabricCapacityName
-            }
-            {
-              name: 'ELIGIBILITY_EVALUATOR_AGENT'
-              value: eligibilityEvaluatorAgentName
-            }
-            {
-              name: 'SPECIALIST_ELIGIBILITY_AGENT'
-              value: specialistEligibilityAgentName
-            }
-            {
-              name: 'SPECIALIST_RENAL_AGENT'
-              value: specialistRenalAgentName
-            }
-            {
-              name: 'SPECIALIST_GENOMICS_AGENT'
-              value: specialistGenomicsAgentName
-            }
-            {
-              name: 'SPECIALIST_PROTOCOL_AGENT'
-              value: specialistProtocolAgentName
-            }
-            {
-              name: 'SPECIALIST_WORKFLOW_AGENT'
-              value: specialistWorkflowAgentName
-            }
-            {
-              name: 'SPECIALIST_EVIDENCE_AGENT'
-              value: specialistEvidenceAgentName
             }
             {
               name: 'CORS_ORIGINS'
@@ -279,36 +240,24 @@ resource api 'Microsoft.App/containerApps@2024-03-01' = {
               value: workIqScope
             }
             {
-              name: 'USE_LIVE_FOUNDRY'
+              name: 'WORK_IQ_TIMEOUT_SECONDS'
+              value: '240'
+            }
+            {
+              name: 'USE_LIVE_ISV_FOUNDRY'
               value: 'true'
             }
             {
-              name: 'USE_LIVE_FABRIC'
+              name: 'USE_LIVE_ISV_FABRIC'
               value: 'true'
             }
             {
-              name: 'USE_LIVE_WORK'
-              value: useLiveWork ? 'true' : 'false'
+              name: 'USE_LIVE_ISV_WORK'
+              value: useLiveIsvWork ? 'true' : 'false'
             }
             {
-              name: 'USE_LIVE_WEB'
+              name: 'USE_LIVE_ISV_WEB'
               value: 'true'
-            }
-            {
-              name: 'USE_MULTI_AGENT'
-              value: 'true'
-            }
-            {
-              // The 6-role specialist team drives the Assessment Steps. LIVE narration is enabled for
-              // a NARROW set of roles (LIVE_SPECIALIST_ROLES) that reason over the already-established
-              // grounded facts; the rest stay grounded. Narrating all 6 live (each re-running KB +
-              // Fabric) fans out too far and times out on the single F64 Data Agent.
-              name: 'USE_LIVE_SPECIALISTS'
-              value: useLiveSpecialists ? 'true' : 'false'
-            }
-            {
-              name: 'LIVE_SPECIALIST_ROLES'
-              value: 'eligibility,renal_labs,genomics'
             }
           ]
         }

@@ -1,29 +1,32 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  ask,
-  askStream,
+  askISV,
+  askISVStream,
   decideStreamFailure,
   getFabricStatus,
   RequestError,
-  shouldUseSampleFallback,
 } from './api/client'
 import './App.css'
 import { AuthenticationError, useAuthentication } from './authentication'
-import { ActionRail } from './components/ActionRail'
-import { AssessmentCard } from './components/AssessmentCard'
 import { AssessmentFailureCard } from './components/AssessmentFailureCard'
 import { BuildingAssessment } from './components/BuildingAssessment'
 import { EmptyState } from './components/EmptyState'
-import { EvidencePacket } from './components/EvidencePacket'
 import { IQActivityBar } from './components/IQActivityBar'
-import { PatientSnapshot } from './components/PatientSnapshot'
+import { ISVDashboard } from './components/ISVDashboard'
 import { QuestionLibrary } from './components/QuestionLibrary'
 import { SideNav } from './components/SideNav'
 import { TopBar } from './components/TopBar'
-import { TrialCard } from './components/TrialCard'
-import { heroQuestion, sampleResult } from './sampleResult'
+import { defaultQuestionExample, type QuestionExample } from './questionLibrary'
 import { sourceLabels, sourceOrder, sourceRetrieving } from './sourceMeta'
-import type { AskResult, FabricStatus, SourceMapEntry, StreamEvent, TraceStep } from './types'
+import type {
+  FabricStatus,
+  ISVAskResult,
+  ISVStreamEvent,
+  SourceMapEntry,
+  TraceStep,
+} from './types'
+
+const SECTION_IDS = ['assessment', 'account', 'specialists', 'evidence', 'workflow', 'sources', 'settings']
 
 function createIdleSourceMap(status: SourceMapEntry['status']): SourceMapEntry[] {
   return sourceOrder.map((source) => ({
@@ -36,15 +39,17 @@ function createIdleSourceMap(status: SourceMapEntry['status']): SourceMapEntry[]
   }))
 }
 
-const SECTION_IDS = ['assessment', 'patient', 'evidence', 'workflow', 'sources', 'settings']
-
 function App() {
   const { getAccessToken } = useAuthentication()
-  const [question, setQuestion] = useState(heroQuestion)
-  const [result, setResult] = useState<AskResult | null>(null)
+  const [question, setQuestion] = useState(defaultQuestionExample.prompt)
+  const [accountId, setAccountId] = useState(defaultQuestionExample.accountId)
+  const [renewalId, setRenewalId] = useState(defaultQuestionExample.renewalId)
+  const [result, setResult] = useState<ISVAskResult | null>(null)
   const [sourceMap, setSourceMap] = useState<SourceMapEntry[]>(createIdleSourceMap('idle'))
   const [trace, setTrace] = useState<TraceStep[]>([])
-  const [statusMessage, setStatusMessage] = useState('Select or edit a question, then run the assessment.')
+  const [statusMessage, setStatusMessage] = useState(
+    'Select or edit a question, then run the customer assessment.',
+  )
   const [isLoading, setIsLoading] = useState(false)
   const [darkMode, setDarkMode] = useState(false)
   const [activeSection, setActiveSection] = useState('assessment')
@@ -86,11 +91,17 @@ function App() {
       if (element) observer.observe(element)
     }
     return () => observer.disconnect()
-  }, [])
+  }, [result])
 
   function clearTraceTimers() {
     for (const timer of traceTimers.current) window.clearTimeout(timer)
     traceTimers.current = []
+  }
+
+  function selectQuestionExample(example: QuestionExample) {
+    setQuestion(example.prompt)
+    setAccountId(example.accountId)
+    setRenewalId(example.renewalId)
   }
 
   function revealPlanSteps(steps: string[]) {
@@ -98,13 +109,21 @@ function App() {
     setTrace([])
     for (const [index, step] of steps.entries()) {
       const timer = window.setTimeout(() => {
-        setTrace((current) => [...current, { step, detail: 'Planning source queries and evidence checks.', ts: index, status: 'in_progress' }])
-      }, index * 220)
+        setTrace((current) => [
+          ...current,
+          {
+            step,
+            detail: 'Planning source queries and evidence checks.',
+            ts: index,
+            status: 'in_progress',
+          },
+        ])
+      }, index * 180)
       traceTimers.current.push(timer)
     }
   }
 
-  function handleStreamEvent(event: StreamEvent) {
+  function handleStreamEvent(event: ISVStreamEvent) {
     switch (event.type) {
       case 'plan':
         setSourceMap(createIdleSourceMap('queued'))
@@ -114,7 +133,12 @@ function App() {
         setSourceMap((current) =>
           current.map((entry) =>
             entry.source === event.data.source
-              ? { ...entry, status: 'searching', queries: [event.data.query], retrieving: event.data.retrieving ?? entry.retrieving }
+              ? {
+                  ...entry,
+                  status: 'searching',
+                  queries: [event.data.query],
+                  retrieving: event.data.retrieving ?? entry.retrieving,
+                }
               : entry,
           ),
         )
@@ -137,8 +161,6 @@ function App() {
           ),
         )
         break
-      case 'token':
-        break
       case 'agent_activity':
         if (event.data.phase === 'answer_delta') {
           setReasoningDraft((current) => current + (event.data.text ?? ''))
@@ -150,7 +172,7 @@ function App() {
         setResult(event.data.result)
         setSourceMap(event.data.result.sourceMap)
         setTrace(event.data.result.trace)
-        setStatusMessage(`Live ${event.data.result.mode} assessment rendered.`)
+        setStatusMessage(`${event.data.result.mode === 'mock' ? 'Synthetic' : 'Live'} ISV assessment rendered.`)
         break
       case 'error':
         setStatusMessage(`Stream warning: ${event.data.message}`)
@@ -161,8 +183,6 @@ function App() {
   }
 
   async function handleAsk() {
-    const patientId = result?.patient.id ?? sampleResult.patient.id
-    const trialId = result?.trial.id ?? sampleResult.trial.id
     clearTraceTimers()
     setIsLoading(true)
     setResult(null)
@@ -170,7 +190,7 @@ function App() {
     setTrace([])
     setReasoningDraft('')
     setAssessmentFailure(null)
-    setStatusMessage('Dispatching the IQ layers in parallel...')
+    setStatusMessage('Dispatching the four IQ layers in parallel...')
 
     let streamReturnedFinal = false
     let streamHadProgress = false
@@ -189,7 +209,7 @@ function App() {
     }
 
     try {
-      await askStream(
+      await askISVStream(
         question,
         (event) => {
           streamHadProgress = true
@@ -197,56 +217,40 @@ function App() {
           handleStreamEvent(event)
         },
         accessToken,
-        patientId,
-        trialId,
+        accountId,
+        renewalId,
       )
-      if (!streamReturnedFinal) {
-        throw new Error('Stream closed before final result')
-      }
+      if (!streamReturnedFinal) throw new Error('Stream closed before final result')
     } catch (streamError) {
-      if (streamReturnedFinal) {
-        setStatusMessage('Assessment complete.')
-        return
-      }
-      const streamFailureDecision = decideStreamFailure(streamError)
-      if (streamFailureDecision === 'validation') {
+      if (streamReturnedFinal) return
+      const decision = decideStreamFailure(streamError)
+      if (decision === 'validation') {
         setSourceMap(createIdleSourceMap('idle'))
-        setStatusMessage(streamError instanceof Error ? streamError.message : 'The assessment request was invalid.')
+        setStatusMessage(streamError instanceof Error ? streamError.message : 'Invalid request.')
         return
       }
-      if (streamFailureDecision === 'terminal-composition') {
+      if (decision === 'terminal-composition') {
         clearTraceTimers()
-        const message = streamError instanceof Error ? streamError.message : 'The assessment could not be composed.'
+        const message =
+          streamError instanceof Error ? streamError.message : 'The assessment could not be composed.'
         setAssessmentFailure(message)
-        setStatusMessage(`Retrieval completed, but the assessment could not be composed: ${message}`)
+        setStatusMessage(`Retrieval completed, but composition failed: ${message}`)
         return
       }
       try {
-        const fallback = await ask(question, accessToken, patientId, trialId)
-        setAssessmentFailure(null)
+        const fallback = await askISV(question, accessToken, accountId, renewalId)
         setResult(fallback)
         setSourceMap(fallback.sourceMap)
         setTrace(fallback.trace)
-        setStatusMessage('Streaming unavailable; rendered non-streaming result.')
+        setStatusMessage('Streaming unavailable; rendered the non-streaming assessment.')
       } catch (askError) {
-        // Any backend HTTP response is authoritative, including 5xx service failures. Only a real
-        // transport/connectivity failure falls back to the bundled sample case.
-        if (askError instanceof RequestError) {
-          if (!streamHadProgress) setSourceMap(createIdleSourceMap('idle'))
-          if (streamHadProgress) setAssessmentFailure(askError.message)
-          setStatusMessage(
-            streamHadProgress
-              ? `Retrieval completed, but the assessment could not be composed: ${askError.message}`
-              : askError.message,
-          )
-        } else if (shouldUseSampleFallback(askError)) {
-          setAssessmentFailure(null)
-          setResult(sampleResult)
-          setSourceMap(sampleResult.sourceMap)
-          setTrace(sampleResult.trace)
-          setStatusMessage('Backend unreachable; showing the bundled sample case.')
-          console.warn('Using bundled sample fallback.', { streamError, askError })
-        }
+        if (!streamHadProgress) setSourceMap(createIdleSourceMap('idle'))
+        const message =
+          askError instanceof RequestError
+            ? askError.message
+            : 'The local ISV API is unavailable. Start it with scripts/dev.ps1.'
+        if (streamHadProgress) setAssessmentFailure(message)
+        setStatusMessage(message)
       }
     } finally {
       setIsLoading(false)
@@ -255,57 +259,37 @@ function App() {
 
   return (
     <div className="layout">
-      <SideNav activeId={activeSection} darkMode={darkMode} onToggleDarkMode={() => setDarkMode((value) => !value)} />
-
+      <SideNav
+        activeId={activeSection}
+        darkMode={darkMode}
+        onToggleDarkMode={() => setDarkMode((value) => !value)}
+      />
       <div className="main-col">
         <TopBar mode={result?.mode} fabricStatus={fabricStatus} />
-
         <div className="status-strip">
           <span className={isLoading ? 'loading-dot' : 'ready-dot'} aria-hidden="true" />
           <span>{statusMessage}</span>
         </div>
-
-        <QuestionLibrary question={question} isLoading={isLoading} onQuestionChange={setQuestion} onAsk={handleAsk} />
-
+        <QuestionLibrary
+          question={question}
+          isLoading={isLoading}
+          onQuestionChange={setQuestion}
+          onSelectExample={selectQuestionExample}
+          onAsk={handleAsk}
+        />
         <IQActivityBar entries={sourceMap} />
-
-        {result ? (
-          <>
-            <TrialCard trial={result.trial} crclDate={result.patient.crclDate} />
-
-            <div className="assessment-zone">
-              <div className="assessment-main">
-                <AssessmentCard
-                  eligibility={result.eligibility}
-                  answer={result.answer}
-                  intent={result.intent}
-                  criteria={result.criteria}
-                  missingData={result.missingData}
-                />
-
-                <PatientSnapshot patient={result.patient} criteria={result.criteria} />
-
-                <EvidencePacket
-                  evidence={result.evidence}
-                  criteria={result.criteria}
-                  intent={result.intent}
-                />
-              </div>
-
-              <ActionRail result={result} trace={trace} />
-            </div>
-          </>
-        ) : isLoading ? (
-          <BuildingAssessment sources={sourceMap} draft={reasoningDraft} />
-        ) : assessmentFailure ? (
-          <AssessmentFailureCard message={assessmentFailure} onRetry={handleAsk} />
-        ) : (
-          <EmptyState isLoading={false} />
-        )}
-
-        <footer className="app-footer" id="settings">
-          <p>{(result?.disclaimer ?? 'Synthetic data. No PHI. Not clinical decision support.')} Always follow institutional policies and clinical judgement.</p>
-        </footer>
+        {isLoading || result ? (
+          <BuildingAssessment
+            sources={sourceMap}
+            draft={reasoningDraft}
+            complete={Boolean(result)}
+          />
+        ) : null}
+        {result ? <ISVDashboard result={result} trace={trace} /> : null}
+        {!result && !isLoading && assessmentFailure ? (
+          <AssessmentFailureCard message={assessmentFailure} onRetry={() => void handleAsk()} />
+        ) : null}
+        {!result && !isLoading && !assessmentFailure ? <EmptyState /> : null}
       </div>
     </div>
   )

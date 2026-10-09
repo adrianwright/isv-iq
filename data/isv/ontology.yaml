@@ -1,0 +1,121 @@
+meta:
+  name: microsoft-iq-isv-customer-ontology
+  version: 1
+  domain: customer-renewal-and-expansion
+  source_of_truth: data/isv/registry.yaml
+  disclaimer: "Synthetic demo data only. Not a production forecast or system of record."
+
+entities:
+  Account:
+    collection: accounts
+    key: id
+    attributes:
+      [name, industry, segment, region, health, annual_recurring_revenue, currency,
+       customer_since, employee_count, primary_contact_id, executive_sponsor_id]
+  Contact:
+    collection: contacts
+    key: id
+    attributes: [account_id, display_name, title, role, influence, sentiment]
+  Employee:
+    collection: employees
+    key: id
+    attributes: [display_name, title, skills, availability]
+  AccountTeamMember:
+    collection: account_team
+    key: id
+    attributes: [account_id, employee_id, role, allocation_percent]
+  Renewal:
+    collection: renewals
+    key: id
+    attributes:
+      [account_id, renewal_date, days_to_renewal, current_arr, forecast_arr, currency,
+       stage, forecast_category, owner_id, requested_term_months, requested_proposal_due]
+  Contract:
+    collection: contracts
+    key: id
+    attributes:
+      [account_id, renewal_id, start_date, end_date, notice_date, support_tier,
+       uptime_sla_percent, service_credit_eligible, auto_renew]
+  Subscription:
+    collection: subscriptions
+    key: id
+    attributes: [account_id, product, annual_value, licensed_units, status]
+  ProductUsage:
+    collection: product_usage
+    key: id
+    attributes:
+      [account_id, subscription_id, period, active_users, licensed_users,
+       adoption_percent, trend_percent]
+  SupportCase:
+    collection: support_cases
+    key: id
+    attributes:
+      [account_id, product, priority, status, opened_at, sla_breached,
+       sentiment, owner_id, summary]
+  Invoice:
+    collection: invoices
+    key: id
+    attributes: [account_id, amount, currency, due_date, status, days_overdue]
+  SuccessMilestone:
+    collection: success_milestones
+    key: id
+    attributes: [account_id, name, owner_id, due_date, status, blocker]
+  Commitment:
+    collection: commitments
+    key: id
+    attributes: [account_id, renewal_id, owner_id, source, due_date, status, text]
+  ExpansionCandidate:
+    collection: expansion_candidates
+    key: id
+    attributes:
+      [account_id, renewal_id, product, estimated_arr, currency, fit, confidence,
+       sponsor_contact_id, technical_owner_id, rationale, blocker]
+  Interaction:
+    collection: interactions
+    key: id
+    attributes: [account_id, occurred_at, type, participants, sentiment, summary]
+  ExternalSignal:
+    collection: external_signals
+    key: id
+    attributes: [account_id, occurred_at, category, title, impact, source_url]
+
+relationships:
+  - {name: has_contact, from: Account, to: Contact, via: account_id}
+  - {name: assigned_team, from: Account, to: AccountTeamMember, via: account_id}
+  - {name: team_member_is_employee, from: AccountTeamMember, to: Employee, via: employee_id}
+  - {name: has_renewal, from: Account, to: Renewal, via: account_id}
+  - {name: governed_by_contract, from: Renewal, to: Contract, via: renewal_id}
+  - {name: has_subscription, from: Account, to: Subscription, via: account_id}
+  - {name: subscription_has_usage, from: Subscription, to: ProductUsage, via: subscription_id}
+  - {name: has_support_case, from: Account, to: SupportCase, via: account_id}
+  - {name: receives_invoice, from: Account, to: Invoice, via: account_id}
+  - {name: tracks_milestone, from: Account, to: SuccessMilestone, via: account_id}
+  - {name: has_commitment, from: Account, to: Commitment, via: account_id}
+  - {name: renewal_has_commitment, from: Renewal, to: Commitment, via: renewal_id}
+  - {name: has_expansion_candidate, from: Account, to: ExpansionCandidate, via: account_id}
+  - {name: renewal_has_expansion, from: Renewal, to: ExpansionCandidate, via: renewal_id}
+  - {name: has_interaction, from: Account, to: Interaction, via: account_id}
+  - {name: has_external_signal, from: Account, to: ExternalSignal, via: account_id}
+
+assessment_signals:
+  - id: SIG-ADOPTION
+    category: adoption
+    description: Product usage demonstrates realized value and sustained engagement.
+    evidence_entities: [Subscription, ProductUsage, SuccessMilestone]
+  - id: SIG-SUPPORT
+    category: support
+    description: Open incidents, SLA performance, and sentiment affect renewal confidence.
+    evidence_entities: [SupportCase, Contract, Interaction]
+  - id: SIG-COMMERCIAL
+    category: commercial
+    description: Payment status, forecast value, and requested terms affect commercial risk.
+    evidence_entities: [Renewal, Invoice, Contract]
+  - id: SIG-RELATIONSHIP
+    category: relationship
+    description: Stakeholder influence, sentiment, and open commitments affect executive alignment.
+    evidence_entities: [Contact, Interaction, Commitment, Employee]
+  - id: SIG-EXPANSION
+    category: expansion
+    description: Product fit, customer strategy, capacity, and competition affect expansion potential.
+    evidence_entities: [ExpansionCandidate, ExternalSignal, Employee, ProductUsage]
+

@@ -2,7 +2,8 @@
 asyncio_mode = "auto"
 testpaths = [
   "services/api/tests",
-  "agent/provisioning/live",
+  "agent/provisioning/isv",
+  "data/isv",
 ]
 
 [tool.pyright]

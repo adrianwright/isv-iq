@@ -1,0 +1,72 @@
+meta:
+  version: 1
+  account_id: ACC-1001
+  renewal_id: REN-1001
+  disclaimer: "Synthetic demo prompts and expected outcomes."
+
+prompts:
+  - id: renewal-forecast
+    account_id: ACC-1001
+    renewal_id: REN-1001
+    intent: renewal_forecast
+    category: understand
+    text: >-
+      Should we continue forecasting the full $2.4M Alder Creek Unified School District
+      renewal, or reduce
+      the forecast now? Return a Yes, No, or Not yet verdict with confidence, criteria
+      met, criteria not met, contradictory evidence, missing evidence, and the next
+      forecast action.
+    required_iqs: [fabric, foundry, work, web]
+    expected_outcomes:
+      - Full-value forecast decision
+      - Quantified contraction exposure
+      - Evidence supporting and weakening the forecast
+      - Forecast action and confidence
+  - id: proposal-readiness
+    account_id: ACC-1001
+    renewal_id: REN-1001
+    intent: proposal_readiness
+    category: prepare
+    text: >-
+      Are we ready to send Alder Creek Unified School District the three-year price-protected renewal
+      proposal by October 13? Return a Yes, No, or Not yet verdict based on pricing
+      approval, payment status, support recovery, customer requirements, and open
+      commitments; identify every blocker and its owner.
+    required_iqs: [fabric, foundry, work, web]
+    expected_outcomes:
+      - Proposal readiness verdict
+      - Pricing and approval requirements
+      - Payment and recovery blockers
+      - Blocker owners and due dates
+  - id: expansion-fit
+    account_id: ACC-1001
+    renewal_id: REN-1001
+    intent: expansion_gate
+    category: expand
+    text: >-
+      Should we advance the $450K Alder Creek Unified School District AI Automation opportunity to a
+      funded architecture workshop now? Return a Yes, No, or Not yet verdict based on
+      customer demand, sponsor strength, product fit, technical prerequisites,
+      architect capacity, support trust, and measurable expansion value.
+    required_iqs: [fabric, foundry, work, web]
+    expected_outcomes:
+      - Workshop funding verdict
+      - Demand and product-fit evidence
+      - Technical and capacity blockers
+      - Advancement criteria
+  - id: expansion-acceleration
+    account_id: ACC-1002
+    renewal_id: REN-1002
+    intent: expansion_acceleration
+    category: act
+    text: >-
+      Should we accelerate the $300K Fabrikam Unified School District AI Automation expansion now?
+      Return a Yes, No, or Not yet verdict based on executive sponsorship, adoption
+      strength, customer demand, architecture and security readiness, specialist
+      capacity, support health, payment status, and measurable value criteria.
+    required_iqs: [fabric, foundry, work, web]
+    expected_outcomes:
+      - Expansion acceleration verdict
+      - Positive readiness evidence
+      - Remaining execution controls
+      - Accountable owners and next action

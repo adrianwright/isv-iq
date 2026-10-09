@@ -1,0 +1,3 @@
+id,account_id,renewal_id,product,estimated_arr,currency,fit,confidence,sponsor_contact_id,technical_owner_id,rationale,blocker
+EXP-1001,ACC-1001,REN-1001,AI Automation,450000,USD,strong,medium,CON-1002,EMP-1003,Customer is funding workflow automation and requested an architecture workshop.,Solution architect capacity and unresolved support confidence.
+EXP-2001,ACC-1002,REN-1002,AI Automation,300000,USD,strong,high,CON-2001,EMP-2003,"Executive sponsorship, strong adoption, and completed architecture validation support expansion.",none

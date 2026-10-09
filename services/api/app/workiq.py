@@ -3,6 +3,7 @@ from __future__ import annotations
 import time
 import uuid
 import logging
+import re
 from collections import Counter
 from dataclasses import dataclass
 from typing import Any, Protocol
@@ -304,6 +305,41 @@ def _validated_web_url(value: Any) -> str | None:
     return url
 
 
+def _markdown_attributions(text: str) -> tuple[WorkIQAttribution, ...]:
+    attributions: list[WorkIQAttribution] = []
+    seen_urls: set[str] = set()
+    for title, raw_url in re.findall(r"\[([^\]\n]+)\]\((https?://[^)\s]+)\)", text):
+        url = _validated_web_url(raw_url)
+        if not url:
+            continue
+        parsed = urlparse(url)
+        host = parsed.netloc.casefold()
+        if host == "www.office.com" and parsed.path.casefold() == "/search":
+            continue
+        if not (
+            host == "outlook.office365.com"
+            or host == "teams.microsoft.com"
+            or host.endswith(".sharepoint.com")
+            or host.endswith(".onedrive.com")
+        ):
+            continue
+        canonical_url = parsed._replace(fragment="").geturl()
+        normalized_title = title.strip().strip("[]")
+        if canonical_url in seen_urls or not normalized_title:
+            continue
+        if normalized_title.isdigit():
+            normalized_title = f"Work IQ citation {normalized_title}"
+        attributions.append(
+            WorkIQAttribution(
+                title=normalized_title,
+                url=canonical_url,
+                attribution_type="citation",
+            )
+        )
+        seen_urls.add(canonical_url)
+    return tuple(attributions)
+
+
 def _http_error_detail(response: httpx.Response) -> str | None:
     try:
         payload = response.json()
@@ -460,6 +496,8 @@ def ask_with_access_token(
 
     text, task_id, context_id = _extract_text(body)
     attributions, attribution_diagnostics = _extract_attributions(body)
+    if not attributions:
+        attributions = _markdown_attributions(text)
     duration_ms = round((time.perf_counter() - started) * 1000)
     type_summary = ",".join(
         f"{name}={count}" for name, count in attribution_diagnostics.type_counts

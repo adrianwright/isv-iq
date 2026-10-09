@@ -1,7 +1,5 @@
 import { CalendarClock, CheckSquare, Hash, User } from 'lucide-react'
-import { NOT_SUBMITTED } from '../sentiment'
 import type { NextAction } from '../types'
-import { StatusChip } from './StatusChip'
 
 interface NextActionCardProps {
   action: NextAction
@@ -47,7 +45,7 @@ export function NextActionCard({ action }: NextActionCardProps) {
           </div>
         ) : null}
       </dl>
-      <StatusChip meta={NOT_SUBMITTED} label={action.taskStatus || NOT_SUBMITTED.label} />
+      <span className="task-status">{action.taskStatus || 'Drafted (not submitted)'}</span>
     </section>
   )
 }

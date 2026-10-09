@@ -5,13 +5,6 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-EligibilityAssessment = Literal[
-    "eligible",
-    "likely_eligible_pending",
-    "not_eligible",
-    "indeterminate",
-]
-
 
 class Source(str, Enum):
     FOUNDRY = "foundry"
@@ -20,54 +13,10 @@ class Source(str, Enum):
     WEB = "web"
 
 
-class AskRequest(BaseModel):
-    question: str = Field(min_length=1)
-    patientId: str | None = None
-    trialId: str | None = None
-
-
 class Owner(BaseModel):
     id: str
     display: str
     role: str
-
-
-class PatientSnapshot(BaseModel):
-    id: str
-    mrn: str
-    display: str
-    age: int
-    sex: str
-    ecog: int
-    diagnosis: str
-    stage: str
-    biomarkers: list[str]
-    crcl: float | None
-    crclDate: str | None
-
-
-class Eligibility(BaseModel):
-    assessment: EligibilityAssessment
-    label: str
-    confidence: Literal["low", "medium", "high"]
-
-
-class TrialSummary(BaseModel):
-    id: str
-    short: str
-    status: str
-    humanName: str = ""
-    title: str = ""
-    phase: str = ""
-    sponsor: str = ""
-    keyIssue: str = ""
-    latestProtocol: str = ""
-
-
-class CriteriaItem(BaseModel):
-    text: str
-    status: Literal["met", "uncertain", "not_met"]
-    evidenceRefs: list[str]
 
 
 class Evidence(BaseModel):
@@ -123,30 +72,6 @@ class TraceStep(BaseModel):
     status: Literal["completed", "in_progress", "pending", "queued"] = "completed"
 
 
-class AskResult(BaseModel):
-    question: str
-    answer: str
-    answerRefs: list[str]
-    intent: str = "eligibility"
-    scope: str = ""
-    bottomLine: str = ""
-    patient: PatientSnapshot
-    eligibility: Eligibility
-    trial: TrialSummary
-    criteria: list[CriteriaItem]
-    evidence: list[Evidence]
-    missingData: list[str]
-    nextAction: NextAction
-    humanReview: HumanReview
-    reviewers: list[Reviewer] = Field(default_factory=list)
-    unavailableSources: list[str] = Field(default_factory=list)
-    sourceMap: list[SourceMapItem]
-    trace: list[TraceStep]
-    agentDriven: bool = False
-    mode: Literal["mock", "live"]
-    disclaimer: str
-
-
 class PlanEventPayload(BaseModel):
     steps: list[str]
 
@@ -168,21 +93,6 @@ class SourceResultEventPayload(BaseModel):
     retrieving: str = ""
     evidenceCount: int = 0
     evidenceNoun: str = "sources"
-
-
-class TokenEventPayload(BaseModel):
-    text: str
-
-
-class AgentActivityEventPayload(BaseModel):
-    phase: Literal["tool_start", "tool_done", "answer_delta"]
-    source: Source | None = None
-    query: str = ""
-    text: str = ""
-
-
-class FinalEventPayload(BaseModel):
-    result: AskResult
 
 
 class ErrorEventPayload(BaseModel):

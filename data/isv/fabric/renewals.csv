@@ -1,0 +1,3 @@
+id,account_id,renewal_date,days_to_renewal,current_arr,forecast_arr,currency,stage,forecast_category,owner_id,requested_term_months,requested_proposal_due
+REN-1001,ACC-1001,2026-12-20,75,2400000,2200000,USD,evaluation,at_risk,EMP-1001,36,2026-10-13
+REN-1002,ACC-1002,2027-02-03,120,1800000,1875000,USD,negotiation,commit,EMP-2001,36,2026-10-20

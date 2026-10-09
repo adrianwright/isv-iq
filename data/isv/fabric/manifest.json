@@ -1,0 +1,234 @@
+{
+  "schemaVersion": "isv.fabric.v1",
+  "source": "data/isv/registry.yaml",
+  "tables": [
+    {
+      "name": "accounts",
+      "key": "id",
+      "columns": [
+        "id",
+        "name",
+        "industry",
+        "segment",
+        "region",
+        "health",
+        "annual_recurring_revenue",
+        "currency",
+        "customer_since",
+        "employee_count",
+        "primary_contact_id",
+        "executive_sponsor_id"
+      ],
+      "rowCount": 2
+    },
+    {
+      "name": "contacts",
+      "key": "id",
+      "columns": [
+        "id",
+        "account_id",
+        "display_name",
+        "title",
+        "role",
+        "influence",
+        "sentiment"
+      ],
+      "rowCount": 6
+    },
+    {
+      "name": "employees",
+      "key": "id",
+      "columns": [
+        "id",
+        "display_name",
+        "title",
+        "skills",
+        "availability"
+      ],
+      "rowCount": 10
+    },
+    {
+      "name": "account_team",
+      "key": "id",
+      "columns": [
+        "id",
+        "account_id",
+        "employee_id",
+        "role",
+        "allocation_percent"
+      ],
+      "rowCount": 10
+    },
+    {
+      "name": "renewals",
+      "key": "id",
+      "columns": [
+        "id",
+        "account_id",
+        "renewal_date",
+        "days_to_renewal",
+        "current_arr",
+        "forecast_arr",
+        "currency",
+        "stage",
+        "forecast_category",
+        "owner_id",
+        "requested_term_months",
+        "requested_proposal_due"
+      ],
+      "rowCount": 2
+    },
+    {
+      "name": "contracts",
+      "key": "id",
+      "columns": [
+        "id",
+        "account_id",
+        "renewal_id",
+        "start_date",
+        "end_date",
+        "notice_date",
+        "support_tier",
+        "uptime_sla_percent",
+        "service_credit_eligible",
+        "auto_renew"
+      ],
+      "rowCount": 2
+    },
+    {
+      "name": "subscriptions",
+      "key": "id",
+      "columns": [
+        "id",
+        "account_id",
+        "product",
+        "annual_value",
+        "licensed_units",
+        "status"
+      ],
+      "rowCount": 6
+    },
+    {
+      "name": "product_usage",
+      "key": "id",
+      "columns": [
+        "id",
+        "account_id",
+        "subscription_id",
+        "period",
+        "active_users",
+        "licensed_users",
+        "adoption_percent",
+        "trend_percent"
+      ],
+      "rowCount": 4
+    },
+    {
+      "name": "support_cases",
+      "key": "id",
+      "columns": [
+        "id",
+        "account_id",
+        "product",
+        "priority",
+        "status",
+        "opened_at",
+        "sla_breached",
+        "sentiment",
+        "owner_id",
+        "summary"
+      ],
+      "rowCount": 4
+    },
+    {
+      "name": "invoices",
+      "key": "id",
+      "columns": [
+        "id",
+        "account_id",
+        "amount",
+        "currency",
+        "due_date",
+        "status",
+        "days_overdue"
+      ],
+      "rowCount": 4
+    },
+    {
+      "name": "success_milestones",
+      "key": "id",
+      "columns": [
+        "id",
+        "account_id",
+        "name",
+        "owner_id",
+        "due_date",
+        "status",
+        "blocker"
+      ],
+      "rowCount": 4
+    },
+    {
+      "name": "commitments",
+      "key": "id",
+      "columns": [
+        "id",
+        "account_id",
+        "renewal_id",
+        "owner_id",
+        "source",
+        "due_date",
+        "status",
+        "text"
+      ],
+      "rowCount": 5
+    },
+    {
+      "name": "expansion_candidates",
+      "key": "id",
+      "columns": [
+        "id",
+        "account_id",
+        "renewal_id",
+        "product",
+        "estimated_arr",
+        "currency",
+        "fit",
+        "confidence",
+        "sponsor_contact_id",
+        "technical_owner_id",
+        "rationale",
+        "blocker"
+      ],
+      "rowCount": 2
+    },
+    {
+      "name": "interactions",
+      "key": "id",
+      "columns": [
+        "id",
+        "account_id",
+        "occurred_at",
+        "type",
+        "participants",
+        "sentiment",
+        "summary"
+      ],
+      "rowCount": 5
+    },
+    {
+      "name": "external_signals",
+      "key": "id",
+      "columns": [
+        "id",
+        "account_id",
+        "occurred_at",
+        "category",
+        "title",
+        "impact",
+        "source_url"
+      ],
+      "rowCount": 6
+    }
+  ]
+}
