@@ -1,7 +1,14 @@
 name: Pages
 
-# Manual only: publishing the landing site is an explicit action, never a side effect of a push.
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - site/**
+      - docs/images/**
+      - docs/isv-why-it-matters.html
+      - .github/workflows/pages.yml
   workflow_dispatch:
 
 permissions:
